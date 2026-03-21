@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: gameshelf-api
+    runtime: docker
+    plan: free
+    branch: development
+    healthCheckPath: /health
+    envVars:
+      - key: FIREBASE_PROJECT_ID
+        sync: false
+      - key: FIREBASE_PRIVATE_KEY
+        sync: false
+      - key: FIREBASE_CLIENT_EMAIL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: STEAM_API_KEY
+        sync: false
+      - key: ITAD_API_KEY
+        sync: false
+      - key: EPIC_CLIENT_ID
+        sync: false
+      - key: EPIC_CLIENT_SECRET
+        sync: false
+      - key: GOG_CLIENT_ID
+        sync: false
+      - key: GOG_CLIENT_SECRET
+        sync: false
