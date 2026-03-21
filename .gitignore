@@ -1,0 +1,63 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+*.egg
+dist/
+build/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Environment variables
+.env
+.env.local
+.env.production
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+
+# Docker
+docker-compose.override.yml
+
+# Redis
+dump.rdb
+
+# Firebase
+firebase-debug.log
+serviceAccountKey.json
+*-firebase-adminsdk-*.json
+
+# AI agent files — NEVER commit these
+CLAUDE.md
+AGENTS.md
+.claude/
+.cursorrules
+.cursor/
+.github/copilot/
+.aider*
+.continue/
+codex.md
+CODEX.md
+.windsurf/
+skills-lock.json
+gameshelf-api-plan.md
+phases/
