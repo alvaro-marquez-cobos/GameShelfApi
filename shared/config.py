@@ -1,4 +1,5 @@
 from functools import lru_cache
+from typing import cast
 
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -39,8 +40,8 @@ class Settings(BaseSettings):
         if isinstance(v, str):
             import json
 
-            return json.loads(v)
-        return v  # type: ignore[return-value]
+            return cast(list[str], json.loads(v))
+        return cast(list[str], v)
 
     @property
     def is_testing(self) -> bool:
