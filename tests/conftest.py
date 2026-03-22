@@ -102,11 +102,11 @@ async def async_client(
     app.dependency_overrides[get_user_repository] = lambda: mock_user_repo
     app.dependency_overrides[get_cleanup_registry] = lambda: mock_cleanup_registry
     app.dependency_overrides[get_sync_user_use_case] = lambda: SyncUserUseCase(mock_user_repo)
-    app.dependency_overrides[get_logout_use_case] = (
-        lambda: LogoutUseCase(mock_firebase_auth, mock_token_blacklist)
+    app.dependency_overrides[get_logout_use_case] = lambda: LogoutUseCase(
+        mock_firebase_auth, mock_token_blacklist
     )
-    app.dependency_overrides[get_delete_account_use_case] = (
-        lambda: DeleteAccountUseCase(mock_cleanup_registry, mock_user_repo, mock_firebase_auth)
+    app.dependency_overrides[get_delete_account_use_case] = lambda: DeleteAccountUseCase(
+        mock_cleanup_registry, mock_user_repo, mock_firebase_auth
     )
     app.dependency_overrides[get_get_profile_use_case] = lambda: GetProfileUseCase(mock_user_repo)
 
