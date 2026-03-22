@@ -11,6 +11,7 @@ class ICleanupRegistry(ABC):
     Modules register their own cleanup logic so that account deletion
     can cascade across module boundaries without direct cross-module imports.
     """
+
     @abstractmethod
     def register(self, name: str, handler: Callable[[str], Coroutine[Any, Any, None]]) -> None:
         """Register a named cleanup handler for account deletion.

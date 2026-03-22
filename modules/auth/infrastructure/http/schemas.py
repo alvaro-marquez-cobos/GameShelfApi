@@ -5,6 +5,7 @@ from pydantic import BaseModel
 
 class UserProfileResponse(BaseModel):
     """Response schema containing the user's profile information."""
+
     uid: str
     email: str | None
     display_name: str | None
@@ -17,4 +18,5 @@ class UserProfileResponse(BaseModel):
 
 class MessageResponse(BaseModel):
     """Generic response schema for endpoints that return a simple message."""
+
     message: str

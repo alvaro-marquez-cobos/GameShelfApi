@@ -9,6 +9,7 @@ from shared.domain.interfaces.user_repository import IUserRepository
 
 class SyncUserUseCase(ISyncUserUseCase):
     """Creates or updates the user document with the latest provider data."""
+
     def __init__(self, user_repository: IUserRepository) -> None:
         self._user_repository = user_repository
 

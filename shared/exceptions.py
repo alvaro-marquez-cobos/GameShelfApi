@@ -20,6 +20,7 @@ class AppException(Exception):
         message: Human-readable error description.
         detail: Optional additional context for debugging.
     """
+
     def __init__(
         self,
         status_code: int,
@@ -36,42 +37,49 @@ class AppException(Exception):
 
 class BadRequestException(AppException):
     """Raised when the client sends invalid or malformed input (400)."""
+
     def __init__(self, message: str = "Bad request", detail: Any = None) -> None:
         super().__init__(400, "BAD_REQUEST", message, detail)
 
 
 class UnauthorizedException(AppException):
     """Raised when authentication fails or is missing (401)."""
+
     def __init__(self, message: str = "Unauthorized", detail: Any = None) -> None:
         super().__init__(401, "UNAUTHORIZED", message, detail)
 
 
 class ForbiddenException(AppException):
     """Raised when the user lacks permission for the requested action (403)."""
+
     def __init__(self, message: str = "Forbidden", detail: Any = None) -> None:
         super().__init__(403, "FORBIDDEN", message, detail)
 
 
 class NotFoundException(AppException):
     """Raised when a requested resource does not exist (404)."""
+
     def __init__(self, message: str = "Not found", detail: Any = None) -> None:
         super().__init__(404, "NOT_FOUND", message, detail)
 
 
 class ConflictException(AppException):
     """Raised when the request conflicts with current state (409)."""
+
     def __init__(self, message: str = "Conflict", detail: Any = None) -> None:
         super().__init__(409, "CONFLICT", message, detail)
 
 
 class RateLimitedException(AppException):
     """Raised when a rate limit has been exceeded (429)."""
+
     def __init__(self, message: str = "Rate limited", detail: Any = None) -> None:
         super().__init__(429, "RATE_LIMITED", message, detail)
 
 
 class ExternalServiceException(AppException):
     """Raised when a third-party service returns an error (502)."""
+
     def __init__(self, message: str = "External service error", detail: Any = None) -> None:
         super().__init__(502, "EXTERNAL_SERVICE_ERROR", message, detail)
 

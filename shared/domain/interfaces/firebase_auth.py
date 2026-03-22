@@ -6,6 +6,7 @@ from typing import Any
 
 class IFirebaseAuthProvider(ABC):
     """Contract for verifying tokens and managing Firebase user accounts."""
+
     @abstractmethod
     async def verify_token(self, id_token: str) -> dict[str, Any]:
         """Verify a Firebase ID token and return the decoded claims.

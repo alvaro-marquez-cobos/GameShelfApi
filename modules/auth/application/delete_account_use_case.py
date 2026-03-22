@@ -13,6 +13,7 @@ from shared.domain.interfaces.user_repository import IUserRepository
 
 class DeleteAccountUseCase(IDeleteAccountUseCase):
     """Deletes user data across all modules and removes the Firebase account."""
+
     def __init__(
         self,
         cleanup_registry: ICleanupRegistry,

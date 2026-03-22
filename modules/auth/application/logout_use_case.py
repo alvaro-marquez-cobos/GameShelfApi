@@ -13,6 +13,7 @@ from shared.domain.interfaces.token_blacklist import ITokenBlacklist
 
 class LogoutUseCase(ILogoutUseCase):
     """Blacklists the active token so it cannot be reused after logout."""
+
     def __init__(
         self,
         firebase_auth: IFirebaseAuthProvider,

@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     All fields map to environment variables (case-insensitive).
     Secrets and service URLs are loaded from .env in development.
     """
+
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     # Firebase

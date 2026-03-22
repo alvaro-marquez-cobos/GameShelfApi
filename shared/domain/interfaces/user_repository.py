@@ -8,6 +8,7 @@ from shared.domain.entities.user import AuthenticatedUser
 
 class IUserRepository(ABC):
     """Contract for storing and retrieving user profile data."""
+
     @abstractmethod
     async def find_by_uid(self, uid: str) -> dict[str, Any] | None:
         """Retrieve a user document by UID, or None if it does not exist."""

@@ -9,6 +9,7 @@ from shared.domain.interfaces.cleanup_registry import ICleanupRegistry
 
 class CleanupRegistry(ICleanupRegistry):
     """In-memory registry that collects and executes cleanup handlers concurrently."""
+
     def __init__(self) -> None:
         self._handlers: dict[str, Callable[[str], Coroutine[Any, Any, None]]] = {}
 

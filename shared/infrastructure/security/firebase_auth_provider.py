@@ -16,6 +16,7 @@ from shared.infrastructure.security.firebase_client import get_firebase_app
 
 class FirebaseAuthProvider(IFirebaseAuthProvider):
     """Async wrapper around Firebase Admin SDK authentication methods."""
+
     async def verify_token(self, id_token: str) -> dict[str, Any]:
         try:
             app = get_firebase_app()

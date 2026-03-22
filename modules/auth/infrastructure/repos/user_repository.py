@@ -16,6 +16,7 @@ _COLLECTION = "users"
 
 class FirestoreUserRepository(IUserRepository):
     """IUserRepository backed by Google Cloud Firestore."""
+
     async def find_by_uid(self, uid: str) -> dict[str, Any] | None:
         db = get_firestore()
         doc_ref = db.collection(_COLLECTION).document(uid)

@@ -5,6 +5,7 @@ from abc import ABC, abstractmethod
 
 class ITokenBlacklist(ABC):
     """Contract for tracking revoked tokens until they naturally expire."""
+
     @abstractmethod
     async def add(self, token_id: str, ttl_seconds: int) -> None:
         """Blacklist a token for the given duration.

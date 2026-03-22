@@ -9,6 +9,7 @@ from shared.domain.interfaces.user_repository import IUserRepository
 
 class GetProfileUseCase(IGetProfileUseCase):
     """Fetches the user profile from the repository, raising if not found."""
+
     def __init__(self, user_repository: IUserRepository) -> None:
         self._user_repository = user_repository
 

@@ -11,6 +11,7 @@ from shared.infrastructure.cache.redis_client import get_redis
 
 class RedisTokenBlacklist(ITokenBlacklist):
     """ITokenBlacklist implementation using Redis SETEX for automatic expiry."""
+
     async def add(self, token_id: str, ttl_seconds: int) -> None:
         redis = get_redis()
         key = token_blacklist_key(token_id)

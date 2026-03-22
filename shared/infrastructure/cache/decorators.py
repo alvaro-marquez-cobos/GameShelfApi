@@ -25,6 +25,7 @@ def cached(
         key_builder: Callable that receives the same args as the decorated
             function and returns the Redis key string.
     """
+
     def decorator(
         func: Callable[..., Coroutine[Any, Any, Any]],
     ) -> Callable[..., Coroutine[Any, Any, Any]]:

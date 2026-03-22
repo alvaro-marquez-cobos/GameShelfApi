@@ -15,6 +15,7 @@ class AuthenticatedUser:
         is_guest: True if the user signed in anonymously.
         provider: Sign-in provider identifier (e.g. "google.com").
     """
+
     uid: str
     email: str | None
     display_name: str | None
