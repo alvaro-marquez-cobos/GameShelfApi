@@ -1,3 +1,10 @@
+"""Dependency injection factories for FastAPI's Depends() system.
+
+This module is the single wiring point where interfaces are bound to their
+concrete implementations. Use cases and infrastructure services are lazily
+imported to avoid circular dependencies between modules.
+"""
+
 from typing import Annotated
 
 from fastapi import Depends

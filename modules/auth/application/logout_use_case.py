@@ -1,3 +1,9 @@
+"""Use case for logging out by blacklisting the current token.
+
+Decodes the token to extract its identifier and expiry, then adds it
+to the blacklist with a TTL matching the token's remaining lifetime.
+"""
+
 import time
 
 from modules.auth.domain.interfaces.use_cases.logout import ILogoutUseCase
@@ -6,6 +12,8 @@ from shared.domain.interfaces.token_blacklist import ITokenBlacklist
 
 
 class LogoutUseCase(ILogoutUseCase):
+    """Blacklists the active token so it cannot be reused after logout."""
+
     def __init__(
         self,
         firebase_auth: IFirebaseAuthProvider,

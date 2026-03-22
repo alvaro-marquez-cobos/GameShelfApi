@@ -1,3 +1,9 @@
+"""Firebase Authentication provider implementation.
+
+Wraps the synchronous Firebase Admin SDK calls in asyncio threads
+to avoid blocking the event loop.
+"""
+
 import asyncio
 from typing import Any
 
@@ -9,6 +15,8 @@ from shared.infrastructure.security.firebase_client import get_firebase_app
 
 
 class FirebaseAuthProvider(IFirebaseAuthProvider):
+    """Async wrapper around Firebase Admin SDK authentication methods."""
+
     async def verify_token(self, id_token: str) -> dict[str, Any]:
         try:
             app = get_firebase_app()
