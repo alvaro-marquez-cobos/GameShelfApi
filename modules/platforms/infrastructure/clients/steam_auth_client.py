@@ -45,7 +45,7 @@ class SteamAuthClient(ISteamAuthClient):
                     "steamid": steam_id,
                     "include_appinfo": 1,
                     "include_played_free_games": 1,
-                    "skip_unvetted_apps": "false",
+                    "skip_unvetted_apps": 0,
                     "format": "json",
                 },
             )
@@ -64,6 +64,7 @@ class SteamAuthClient(ISteamAuthClient):
                 params={
                     "key": self._api_key,
                     "steamid": steam_id,
+                    "count": 0,
                     "format": "json",
                 },
             )
@@ -87,7 +88,7 @@ class SteamAuthClient(ISteamAuthClient):
 
         ranks = response.json().get("response", {}).get("ranks", [])
         return [
-            SteamGame(app_id=entry["appid"], name=entry.get("appid", ""), playtime_forever=0)
+            SteamGame(app_id=entry["appid"], name="", playtime_forever=0)
             for entry in ranks[:limit]
             if "appid" in entry
         ]

@@ -26,12 +26,17 @@ def _normalize(title: str) -> str:
 
 
 def _word_overlap(a: str, b: str) -> float:
-    """Return the Jaccard-like word overlap ratio between two strings."""
+    """Return the word overlap ratio between two strings.
+
+    Uses matching words divided by the max word count, matching
+    the scoring strategy used in the frontend.
+    """
     words_a = set(a.split())
     words_b = set(b.split())
     if not words_a or not words_b:
         return 0.0
-    return len(words_a & words_b) / len(words_a | words_b)
+    matching = len(words_a & words_b)
+    return matching / max(len(words_a), len(words_b))
 
 
 class SteamMetadataClient(ISteamMetadataClient):
