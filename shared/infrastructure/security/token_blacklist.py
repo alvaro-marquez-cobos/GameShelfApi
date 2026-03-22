@@ -12,4 +12,4 @@ class RedisTokenBlacklist(ITokenBlacklist):
     async def is_blacklisted(self, token_id: str) -> bool:
         redis = get_redis()
         key = token_blacklist_key(token_id)
-        return await redis.exists(key) == 1
+        return bool(await redis.exists(key))
