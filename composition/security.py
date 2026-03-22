@@ -1,3 +1,10 @@
+"""Authentication dependencies for protecting API endpoints.
+
+Provides ``get_current_user`` and ``get_optional_user`` callables that
+extract and verify the Firebase bearer token from incoming requests,
+check the token blacklist, and return an AuthenticatedUser.
+"""
+
 from typing import Annotated
 
 from fastapi import Depends
@@ -17,6 +24,11 @@ async def get_current_user(
     firebase_auth: Annotated[IFirebaseAuthProvider, Depends(get_firebase_auth_provider)],
     token_blacklist: Annotated[ITokenBlacklist, Depends(get_token_blacklist)],
 ) -> AuthenticatedUser:
+    """Verify the bearer token and return the authenticated user.
+
+    Raises:
+        UnauthorizedException: If the token is missing, invalid, or blacklisted.
+    """
     if credentials is None:
         raise UnauthorizedException("Missing authorization header")
 
@@ -48,6 +60,7 @@ async def get_optional_user(
     firebase_auth: Annotated[IFirebaseAuthProvider, Depends(get_firebase_auth_provider)],
     token_blacklist: Annotated[ITokenBlacklist, Depends(get_token_blacklist)],
 ) -> AuthenticatedUser | None:
+    """Like get_current_user, but returns None instead of raising on failure."""
     if credentials is None:
         return None
     try:

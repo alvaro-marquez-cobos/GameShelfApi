@@ -1,3 +1,9 @@
+"""GameShelf API application factory and entry point.
+
+Configures the FastAPI app with CORS, exception handlers, lifespan
+management for Redis/Firebase connections, and module router registration.
+"""
+
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
@@ -10,6 +16,7 @@ from shared.exceptions import AppException, app_exception_handler, unhandled_exc
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    """Manage startup and shutdown of external connections (Redis, Firebase)."""
     settings = get_settings()
     if not settings.is_testing:
         try:
@@ -35,6 +42,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
 
 def create_app() -> FastAPI:
+    """Build and configure the FastAPI application instance."""
     settings = get_settings()
 
     app = FastAPI(title="GameShelf API", lifespan=lifespan)
