@@ -44,6 +44,10 @@ plugins = ["pydantic.mypy"]
 warn_unused_ignores = true
 disallow_untyped_defs = true
 
+[[tool.mypy.overrides]]
+module = ["firebase_admin", "firebase_admin.*", "google.cloud.*", "google.oauth2.*"]
+ignore_missing_imports = true
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 
