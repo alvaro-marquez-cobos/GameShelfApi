@@ -45,7 +45,7 @@ class SteamAuthClient(ISteamAuthClient):
                     "steamid": steam_id,
                     "include_appinfo": 1,
                     "include_played_free_games": 1,
-                    "skip_unvetted_apps": "false",
+                    "skip_unvetted_apps": 0,
                     "format": "json",
                 },
             )
@@ -64,6 +64,7 @@ class SteamAuthClient(ISteamAuthClient):
                 params={
                     "key": self._api_key,
                     "steamid": steam_id,
+                    "count": 0,
                     "format": "json",
                 },
             )

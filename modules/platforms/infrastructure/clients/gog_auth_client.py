@@ -82,7 +82,10 @@ class GogAuthClient(IGogAuthClient):
                     "sortBy": "title",
                     "page": page,
                 },
-                headers={"Authorization": f"Bearer {access_token}"},
+                headers={
+                    "Authorization": f"Bearer {access_token}",
+                    "User-Agent": "GOG Galaxy Client",
+                },
             )
             if response.status_code != 200:
                 logger.warning("get_user_games page %s failed: %s", page, response.status_code)
@@ -95,7 +98,7 @@ class GogAuthClient(IGogAuthClient):
                     GogGame(
                         id=str(product.get("id", "")),
                         title=product.get("title", ""),
-                        image_url=f"https:{product.get('image', '')}.jpg"
+                        image_url=f"https:{product['image']}_392.jpg"
                         if product.get("image")
                         else "",
                     )
