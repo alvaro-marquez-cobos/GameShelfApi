@@ -92,7 +92,9 @@ async def test_get_recently_played_returns_games(client: SteamAuthClient) -> Non
 @pytest.mark.asyncio
 async def test_get_recently_played_returns_empty_on_error(client: SteamAuthClient) -> None:
     with respx.mock(base_url="https://api.steampowered.com") as mock:
-        mock.get("/IPlayerService/GetRecentlyPlayedGames/v1/").mock(return_value=httpx.Response(500))
+        mock.get("/IPlayerService/GetRecentlyPlayedGames/v1/").mock(
+            return_value=httpx.Response(500)
+        )
         games = await client.get_recently_played(_STEAM_ID)
 
     assert games == []
@@ -195,7 +197,9 @@ async def test_verify_openid_returns_steam_id_on_success(client: SteamAuthClient
     }
     with respx.mock() as mock:
         mock.post("https://steamcommunity.com/openid/login").mock(
-            return_value=httpx.Response(200, text="is_valid:true\nns:http://specs.openid.net/auth/2.0\n")
+            return_value=httpx.Response(
+                200, text="is_valid:true\nns:http://specs.openid.net/auth/2.0\n"
+            )
         )
         result = await client.verify_openid(params)
 
