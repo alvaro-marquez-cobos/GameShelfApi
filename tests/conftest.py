@@ -83,16 +83,32 @@ async def async_client(
 ) -> AsyncGenerator[AsyncClient, None]:
     from composition.dependencies import (
         get_cleanup_registry,
+        get_delete_account_use_case,
         get_firebase_auth_provider,
+        get_get_profile_use_case,
+        get_logout_use_case,
+        get_sync_user_use_case,
         get_token_blacklist,
         get_user_repository,
     )
     from main import app
+    from modules.auth.application.delete_account_use_case import DeleteAccountUseCase
+    from modules.auth.application.get_profile_use_case import GetProfileUseCase
+    from modules.auth.application.logout_use_case import LogoutUseCase
+    from modules.auth.application.sync_user_use_case import SyncUserUseCase
 
     app.dependency_overrides[get_firebase_auth_provider] = lambda: mock_firebase_auth
     app.dependency_overrides[get_token_blacklist] = lambda: mock_token_blacklist
     app.dependency_overrides[get_user_repository] = lambda: mock_user_repo
     app.dependency_overrides[get_cleanup_registry] = lambda: mock_cleanup_registry
+    app.dependency_overrides[get_sync_user_use_case] = lambda: SyncUserUseCase(mock_user_repo)
+    app.dependency_overrides[get_logout_use_case] = (
+        lambda: LogoutUseCase(mock_firebase_auth, mock_token_blacklist)
+    )
+    app.dependency_overrides[get_delete_account_use_case] = (
+        lambda: DeleteAccountUseCase(mock_cleanup_registry, mock_user_repo, mock_firebase_auth)
+    )
+    app.dependency_overrides[get_get_profile_use_case] = lambda: GetProfileUseCase(mock_user_repo)
 
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         yield client

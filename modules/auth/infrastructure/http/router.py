@@ -2,54 +2,28 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Request, status
 
+from composition.dependencies import (
+    get_delete_account_use_case,
+    get_get_profile_use_case,
+    get_logout_use_case,
+    get_sync_user_use_case,
+)
 from composition.security import get_current_user
-from modules.auth.application.delete_account_use_case import DeleteAccountUseCase
-from modules.auth.application.get_profile_use_case import GetProfileUseCase
-from modules.auth.application.logout_use_case import LogoutUseCase
-from modules.auth.application.sync_user_use_case import SyncUserUseCase
+from modules.auth.domain.interfaces.use_cases.delete_account import IDeleteAccountUseCase
+from modules.auth.domain.interfaces.use_cases.get_profile import IGetProfileUseCase
+from modules.auth.domain.interfaces.use_cases.logout import ILogoutUseCase
+from modules.auth.domain.interfaces.use_cases.sync_user import ISyncUserUseCase
 from modules.auth.infrastructure.http.schemas import MessageResponse, UserProfileResponse
 from shared.domain.entities.user import AuthenticatedUser
 
 router = APIRouter()
 
 
-def _get_sync_use_case() -> SyncUserUseCase:
-    from composition.dependencies import get_user_repository
-
-    return SyncUserUseCase(get_user_repository())
-
-
-def _get_logout_use_case() -> LogoutUseCase:
-    from composition.dependencies import get_firebase_auth_provider, get_token_blacklist
-
-    return LogoutUseCase(get_firebase_auth_provider(), get_token_blacklist())
-
-
-def _get_delete_account_use_case() -> DeleteAccountUseCase:
-    from composition.dependencies import (
-        get_cleanup_registry,
-        get_firebase_auth_provider,
-        get_user_repository,
-    )
-
-    return DeleteAccountUseCase(
-        get_cleanup_registry(),
-        get_user_repository(),
-        get_firebase_auth_provider(),
-    )
-
-
-def _get_get_profile_use_case() -> GetProfileUseCase:
-    from composition.dependencies import get_user_repository
-
-    return GetProfileUseCase(get_user_repository())
-
-
 @router.post("/sync", response_model=UserProfileResponse)
 async def sync_user(
     current_user: Annotated[AuthenticatedUser, Depends(get_current_user)],
+    use_case: Annotated[ISyncUserUseCase, Depends(get_sync_user_use_case)],
 ) -> UserProfileResponse:
-    use_case = _get_sync_use_case()
     data = await use_case.execute(current_user)
     return UserProfileResponse(**data)
 
@@ -58,10 +32,10 @@ async def sync_user(
 async def logout(
     request: Request,
     current_user: Annotated[AuthenticatedUser, Depends(get_current_user)],
+    use_case: Annotated[ILogoutUseCase, Depends(get_logout_use_case)],
 ) -> MessageResponse:
     authorization = request.headers.get("Authorization", "")
     token = authorization.removeprefix("Bearer ").strip()
-    use_case = _get_logout_use_case()
     await use_case.execute(token)
     return MessageResponse(message="Logged out successfully")
 
@@ -69,15 +43,15 @@ async def logout(
 @router.delete("/account", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_account(
     current_user: Annotated[AuthenticatedUser, Depends(get_current_user)],
+    use_case: Annotated[IDeleteAccountUseCase, Depends(get_delete_account_use_case)],
 ) -> None:
-    use_case = _get_delete_account_use_case()
     await use_case.execute(current_user.uid)
 
 
 @router.get("/me", response_model=UserProfileResponse)
 async def get_profile(
     current_user: Annotated[AuthenticatedUser, Depends(get_current_user)],
+    use_case: Annotated[IGetProfileUseCase, Depends(get_get_profile_use_case)],
 ) -> UserProfileResponse:
-    use_case = _get_get_profile_use_case()
     data = await use_case.execute(current_user.uid)
     return UserProfileResponse(**data)
