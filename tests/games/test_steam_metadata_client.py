@@ -101,7 +101,7 @@ async def test_search_store_returns_app_id_on_word_overlap(client: SteamMetadata
 
 @pytest.mark.asyncio
 async def test_search_store_returns_none_when_no_results(client: SteamMetadataClient) -> None:
-    payload: dict[str, list] = {"items": []}
+    payload: dict[str, list[dict]] = {"items": []}
     with respx.mock(base_url="https://store.steampowered.com") as mock:
         mock.get("/api/storesearch/").mock(return_value=httpx.Response(200, json=payload))
         result = await client.search_store("Nonexistent Game XYZ")
