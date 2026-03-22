@@ -63,7 +63,7 @@ class BaseHttpClient:
 
     def _calculate_delay(self, attempt: int) -> float:
         """Compute exponential backoff delay capped at max_delay."""
-        delay = self._base_delay * (2**attempt)
+        delay: float = self._base_delay * float(2**attempt)
         return min(delay, self._max_delay)
 
     async def request(
