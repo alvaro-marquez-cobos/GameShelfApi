@@ -12,7 +12,7 @@ def get_firestore() -> firestore_v1.AsyncClient:
         return _firestore_client
 
     settings = get_settings()
-    cred = service_account.Credentials.from_service_account_info(
+    cred = service_account.Credentials.from_service_account_info(  # type: ignore[no-untyped-call]
         {
             "type": "service_account",
             "project_id": settings.firebase_project_id,
