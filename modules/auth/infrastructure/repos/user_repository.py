@@ -1,3 +1,9 @@
+"""Firestore implementation of the user repository.
+
+Stores user profiles in the ``users`` collection, keyed by Firebase UID.
+Handles created_at/updated_at timestamps automatically on upsert.
+"""
+
 from datetime import UTC, datetime
 from typing import Any
 
@@ -9,6 +15,7 @@ _COLLECTION = "users"
 
 
 class FirestoreUserRepository(IUserRepository):
+    """IUserRepository backed by Google Cloud Firestore."""
     async def find_by_uid(self, uid: str) -> dict[str, Any] | None:
         db = get_firestore()
         doc_ref = db.collection(_COLLECTION).document(uid)

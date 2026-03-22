@@ -1,3 +1,9 @@
+"""Auth module HTTP endpoints.
+
+Provides routes for user sync (post-login), logout, account deletion,
+and profile retrieval. All endpoints require a valid Firebase bearer token.
+"""
+
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Request, status
