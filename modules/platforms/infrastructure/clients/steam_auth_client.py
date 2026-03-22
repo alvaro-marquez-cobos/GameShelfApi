@@ -87,7 +87,7 @@ class SteamAuthClient(ISteamAuthClient):
 
         ranks = response.json().get("response", {}).get("ranks", [])
         return [
-            SteamGame(app_id=entry["appid"], name=entry.get("appid", ""), playtime_forever=0)
+            SteamGame(app_id=entry["appid"], name="", playtime_forever=0)
             for entry in ranks[:limit]
             if "appid" in entry
         ]
