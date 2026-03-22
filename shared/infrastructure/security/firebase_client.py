@@ -1,3 +1,9 @@
+"""Firebase Admin SDK initialization singleton.
+
+Lazily initializes the Firebase app on first call using service account
+credentials from application settings.
+"""
+
 import firebase_admin
 from firebase_admin import credentials
 
@@ -7,6 +13,7 @@ _firebase_app: firebase_admin.App | None = None
 
 
 def get_firebase_app() -> firebase_admin.App:
+    """Return the Firebase app instance, initializing it on first call."""
     global _firebase_app
     if _firebase_app is not None:
         return _firebase_app

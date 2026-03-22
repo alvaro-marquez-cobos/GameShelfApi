@@ -1,3 +1,10 @@
+"""Caching decorator for async functions using Redis.
+
+Provides a ``@cached`` decorator that transparently caches the JSON-serializable
+return value of an async function in Redis with a configurable TTL. Cache
+failures are logged and swallowed to ensure graceful degradation.
+"""
+
 import functools
 import json
 import logging
@@ -11,6 +18,13 @@ def cached(
     ttl: int,
     key_builder: Callable[..., str],
 ) -> Callable[[Callable[..., Coroutine[Any, Any, Any]]], Callable[..., Coroutine[Any, Any, Any]]]:
+    """Decorator that caches async function results in Redis.
+
+    Args:
+        ttl: Time-to-live in seconds for the cached value.
+        key_builder: Callable that receives the same args as the decorated
+            function and returns the Redis key string.
+    """
     def decorator(
         func: Callable[..., Coroutine[Any, Any, Any]],
     ) -> Callable[..., Coroutine[Any, Any, Any]]:

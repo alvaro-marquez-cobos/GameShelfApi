@@ -1,3 +1,10 @@
+"""Application settings loaded from environment variables.
+
+Uses pydantic-settings to validate and parse configuration from .env files
+and environment variables, providing typed access to all service credentials
+and runtime parameters.
+"""
+
 from functools import lru_cache
 from typing import cast
 
@@ -6,6 +13,11 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
+    """Centralized configuration for the GameShelf API.
+
+    All fields map to environment variables (case-insensitive).
+    Secrets and service URLs are loaded from .env in development.
+    """
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     # Firebase
@@ -50,4 +62,5 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings() -> Settings:
+    """Return the cached application settings singleton."""
     return Settings()
