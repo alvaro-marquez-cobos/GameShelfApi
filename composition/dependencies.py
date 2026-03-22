@@ -14,7 +14,15 @@ from modules.auth.domain.interfaces.use_cases.get_profile import IGetProfileUseC
 from modules.auth.domain.interfaces.use_cases.logout import ILogoutUseCase
 from modules.auth.domain.interfaces.use_cases.sync_user import ISyncUserUseCase
 from shared.domain.interfaces.cleanup_registry import ICleanupRegistry
+from shared.domain.interfaces.epic_auth_client import IEpicAuthClient
 from shared.domain.interfaces.firebase_auth import IFirebaseAuthProvider
+from shared.domain.interfaces.gog_auth_client import IGogAuthClient
+from shared.domain.interfaces.hltb_client import IHltbClient
+from shared.domain.interfaces.itad_client import IItadClient
+from shared.domain.interfaces.protondb_client import IProtonDbClient
+from shared.domain.interfaces.psn_auth_client import IPsnAuthClient
+from shared.domain.interfaces.steam_auth_client import ISteamAuthClient
+from shared.domain.interfaces.steam_metadata_client import ISteamMetadataClient
 from shared.domain.interfaces.token_blacklist import ITokenBlacklist
 from shared.domain.interfaces.user_repository import IUserRepository
 from shared.infrastructure.cleanup_registry import CleanupRegistry
@@ -75,3 +83,61 @@ def get_get_profile_use_case(
     from modules.auth.application.get_profile_use_case import GetProfileUseCase
 
     return GetProfileUseCase(user_repository)
+
+
+# ---------------------------------------------------------------------------
+# Platform auth clients
+# ---------------------------------------------------------------------------
+
+
+def get_steam_auth_client() -> ISteamAuthClient:
+    from modules.platforms.infrastructure.clients.steam_auth_client import SteamAuthClient
+
+    return SteamAuthClient()
+
+
+def get_epic_auth_client() -> IEpicAuthClient:
+    from modules.platforms.infrastructure.clients.epic_auth_client import EpicAuthClient
+
+    return EpicAuthClient()
+
+
+def get_gog_auth_client() -> IGogAuthClient:
+    from modules.platforms.infrastructure.clients.gog_auth_client import GogAuthClient
+
+    return GogAuthClient()
+
+
+def get_psn_auth_client() -> IPsnAuthClient:
+    from modules.platforms.infrastructure.clients.psn_auth_client import PsnAuthClient
+
+    return PsnAuthClient()
+
+
+# ---------------------------------------------------------------------------
+# Game data clients
+# ---------------------------------------------------------------------------
+
+
+def get_steam_metadata_client() -> ISteamMetadataClient:
+    from modules.games.infrastructure.clients.steam_metadata_client import SteamMetadataClient
+
+    return SteamMetadataClient()
+
+
+def get_protondb_client() -> IProtonDbClient:
+    from modules.games.infrastructure.clients.protondb_client import ProtonDbClient
+
+    return ProtonDbClient()
+
+
+def get_hltb_client() -> IHltbClient:
+    from modules.games.infrastructure.clients.hltb_client import HltbClient
+
+    return HltbClient()
+
+
+def get_itad_client() -> IItadClient:
+    from modules.games.infrastructure.clients.itad_client import ItadClient
+
+    return ItadClient()
