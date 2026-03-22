@@ -31,6 +31,7 @@ _EPIC_NON_GAME_TYPES = {
     "BUNDLE",
     "UNLOCKABLE",
 }
+_EPIC_INTERNAL_NAMESPACES = {"ue"}
 _CATALOG_BATCH_SIZE = 50
 
 
@@ -105,12 +106,15 @@ class EpicAuthClient(IEpicAuthClient):
                 categories = [
                     c.get("name", "") for c in record.get("catalogItem", {}).get("categories", [])
                 ]
+                namespace = record.get("namespace", "")
                 if any(c in _EPIC_NON_GAME_TYPES for c in categories):
+                    continue
+                if namespace in _EPIC_INTERNAL_NAMESPACES:
                     continue
                 games.append(
                     EpicGame(
                         app_name=record.get("appName", ""),
-                        namespace=record.get("namespace", ""),
+                        namespace=namespace,
                         catalog_item_id=record.get("catalogItemId", ""),
                     )
                 )
