@@ -38,6 +38,7 @@ class Settings(BaseSettings):
     # Rate limits
     steam_max_concurrent: int = 3
     psn_rate_limit: int = 300
+    api_rate_limit: str = "100/minute"
 
     # External APIs
     steam_api_key: str = ""
