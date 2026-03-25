@@ -1,18 +1,30 @@
 """Dependency injection factories for FastAPI's Depends() system.
 
 This module is the single wiring point where interfaces are bound to their
-concrete implementations. Use cases and infrastructure services are lazily
-imported to avoid circular dependencies between modules.
+concrete implementations.
 """
 
 from typing import Annotated
 
 from fastapi import Depends
 
+from modules.auth.application.delete_account_use_case import DeleteAccountUseCase
+from modules.auth.application.get_profile_use_case import GetProfileUseCase
+from modules.auth.application.logout_use_case import LogoutUseCase
+from modules.auth.application.sync_user_use_case import SyncUserUseCase
 from modules.auth.domain.interfaces.use_cases.delete_account import IDeleteAccountUseCase
 from modules.auth.domain.interfaces.use_cases.get_profile import IGetProfileUseCase
 from modules.auth.domain.interfaces.use_cases.logout import ILogoutUseCase
 from modules.auth.domain.interfaces.use_cases.sync_user import ISyncUserUseCase
+from modules.auth.infrastructure.repos.user_repository import FirestoreUserRepository
+from modules.games.infrastructure.clients.hltb_client import HltbClient
+from modules.games.infrastructure.clients.itad_client import ItadClient
+from modules.games.infrastructure.clients.protondb_client import ProtonDbClient
+from modules.games.infrastructure.clients.steam_metadata_client import SteamMetadataClient
+from modules.platforms.infrastructure.clients.epic_auth_client import EpicAuthClient
+from modules.platforms.infrastructure.clients.gog_auth_client import GogAuthClient
+from modules.platforms.infrastructure.clients.psn_auth_client import PsnAuthClient
+from modules.platforms.infrastructure.clients.steam_auth_client import SteamAuthClient
 from shared.domain.interfaces.cleanup_registry import ICleanupRegistry
 from shared.domain.interfaces.epic_auth_client import IEpicAuthClient
 from shared.domain.interfaces.firebase_auth import IFirebaseAuthProvider
@@ -45,16 +57,12 @@ def get_cleanup_registry() -> ICleanupRegistry:
 
 
 def get_user_repository() -> IUserRepository:
-    from modules.auth.infrastructure.repos.user_repository import FirestoreUserRepository
-
     return FirestoreUserRepository()
 
 
 def get_sync_user_use_case(
     user_repository: Annotated[IUserRepository, Depends(get_user_repository)],
 ) -> ISyncUserUseCase:
-    from modules.auth.application.sync_user_use_case import SyncUserUseCase
-
     return SyncUserUseCase(user_repository)
 
 
@@ -62,8 +70,6 @@ def get_logout_use_case(
     firebase_auth: Annotated[IFirebaseAuthProvider, Depends(get_firebase_auth_provider)],
     token_blacklist: Annotated[ITokenBlacklist, Depends(get_token_blacklist)],
 ) -> ILogoutUseCase:
-    from modules.auth.application.logout_use_case import LogoutUseCase
-
     return LogoutUseCase(firebase_auth, token_blacklist)
 
 
@@ -72,16 +78,12 @@ def get_delete_account_use_case(
     user_repository: Annotated[IUserRepository, Depends(get_user_repository)],
     firebase_auth: Annotated[IFirebaseAuthProvider, Depends(get_firebase_auth_provider)],
 ) -> IDeleteAccountUseCase:
-    from modules.auth.application.delete_account_use_case import DeleteAccountUseCase
-
     return DeleteAccountUseCase(cleanup_registry, user_repository, firebase_auth)
 
 
 def get_get_profile_use_case(
     user_repository: Annotated[IUserRepository, Depends(get_user_repository)],
 ) -> IGetProfileUseCase:
-    from modules.auth.application.get_profile_use_case import GetProfileUseCase
-
     return GetProfileUseCase(user_repository)
 
 
@@ -91,26 +93,18 @@ def get_get_profile_use_case(
 
 
 def get_steam_auth_client() -> ISteamAuthClient:
-    from modules.platforms.infrastructure.clients.steam_auth_client import SteamAuthClient
-
     return SteamAuthClient()
 
 
 def get_epic_auth_client() -> IEpicAuthClient:
-    from modules.platforms.infrastructure.clients.epic_auth_client import EpicAuthClient
-
     return EpicAuthClient()
 
 
 def get_gog_auth_client() -> IGogAuthClient:
-    from modules.platforms.infrastructure.clients.gog_auth_client import GogAuthClient
-
     return GogAuthClient()
 
 
 def get_psn_auth_client() -> IPsnAuthClient:
-    from modules.platforms.infrastructure.clients.psn_auth_client import PsnAuthClient
-
     return PsnAuthClient()
 
 
@@ -120,24 +114,16 @@ def get_psn_auth_client() -> IPsnAuthClient:
 
 
 def get_steam_metadata_client() -> ISteamMetadataClient:
-    from modules.games.infrastructure.clients.steam_metadata_client import SteamMetadataClient
-
     return SteamMetadataClient()
 
 
 def get_protondb_client() -> IProtonDbClient:
-    from modules.games.infrastructure.clients.protondb_client import ProtonDbClient
-
     return ProtonDbClient()
 
 
 def get_hltb_client() -> IHltbClient:
-    from modules.games.infrastructure.clients.hltb_client import HltbClient
-
     return HltbClient()
 
 
 def get_itad_client() -> IItadClient:
-    from modules.games.infrastructure.clients.itad_client import ItadClient
-
     return ItadClient()
