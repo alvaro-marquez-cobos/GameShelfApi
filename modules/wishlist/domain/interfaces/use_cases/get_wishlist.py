@@ -1,0 +1,19 @@
+"""Interface for the get wishlist use case."""
+
+from abc import ABC, abstractmethod
+from typing import Any
+
+from modules.wishlist.domain.entities.wishlist_item import WishlistItem
+
+
+class IGetWishlistUseCase(ABC):
+    """Contract for retrieving wishlist items with deal enrichment."""
+
+    @abstractmethod
+    async def execute(self, uid: str) -> list[tuple[WishlistItem, list[Any]]]:
+        """Return all wishlist items paired with current ITAD deals.
+
+        Each tuple contains the wishlist item and a (possibly empty) list of
+        deals. If ITAD enrichment fails for a specific item the list is empty.
+        """
+        ...

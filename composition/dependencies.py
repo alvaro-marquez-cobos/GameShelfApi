@@ -39,6 +39,18 @@ from modules.platforms.infrastructure.clients.steam_auth_client import SteamAuth
 from modules.platforms.infrastructure.repos.platform_repository import (
     FirestorePlatformRepository,
 )
+from modules.wishlist.application.add_to_wishlist_use_case import AddToWishlistUseCase
+from modules.wishlist.application.check_wishlist_use_case import CheckWishlistUseCase
+from modules.wishlist.application.get_wishlist_use_case import GetWishlistUseCase
+from modules.wishlist.application.remove_from_wishlist_use_case import (
+    RemoveFromWishlistUseCase,
+)
+from modules.wishlist.domain.interfaces.use_cases.add_to_wishlist import IAddToWishlistUseCase
+from modules.wishlist.domain.interfaces.use_cases.check_wishlist import ICheckWishlistUseCase
+from modules.wishlist.domain.interfaces.use_cases.get_wishlist import IGetWishlistUseCase
+from modules.wishlist.domain.interfaces.use_cases.remove_from_wishlist import (
+    IRemoveFromWishlistUseCase,
+)
 from modules.wishlist.infrastructure.repos.wishlist_repository import (
     FirestoreWishlistRepository,
 )
@@ -223,3 +235,33 @@ def get_get_library_stats_use_case(
     repo: Annotated[FirestoreLibraryRepository, Depends(get_library_repository)],
 ) -> IGetLibraryStatsUseCase:
     return GetLibraryStatsUseCase(repo)
+
+
+# ---------------------------------------------------------------------------
+# Wishlist use cases
+# ---------------------------------------------------------------------------
+
+
+def get_get_wishlist_use_case(
+    repo: Annotated[FirestoreWishlistRepository, Depends(get_wishlist_repository)],
+    itad_client: Annotated[IItadClient, Depends(get_itad_client)],
+) -> IGetWishlistUseCase:
+    return GetWishlistUseCase(repo, itad_client)
+
+
+def get_add_to_wishlist_use_case(
+    repo: Annotated[FirestoreWishlistRepository, Depends(get_wishlist_repository)],
+) -> IAddToWishlistUseCase:
+    return AddToWishlistUseCase(repo)
+
+
+def get_remove_from_wishlist_use_case(
+    repo: Annotated[FirestoreWishlistRepository, Depends(get_wishlist_repository)],
+) -> IRemoveFromWishlistUseCase:
+    return RemoveFromWishlistUseCase(repo)
+
+
+def get_check_wishlist_use_case(
+    repo: Annotated[FirestoreWishlistRepository, Depends(get_wishlist_repository)],
+) -> ICheckWishlistUseCase:
+    return CheckWishlistUseCase(repo)
