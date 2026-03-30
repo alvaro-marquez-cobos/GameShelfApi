@@ -21,6 +21,17 @@ from modules.games.infrastructure.clients.hltb_client import HltbClient
 from modules.games.infrastructure.clients.itad_client import ItadClient
 from modules.games.infrastructure.clients.protondb_client import ProtonDbClient
 from modules.games.infrastructure.clients.steam_metadata_client import SteamMetadataClient
+from modules.library.application.get_library_stats_use_case import GetLibraryStatsUseCase
+from modules.library.application.get_library_use_case import GetLibraryUseCase
+from modules.library.application.sync_library_use_case import SyncLibraryUseCase
+from modules.library.domain.interfaces.use_cases.get_library import IGetLibraryUseCase
+from modules.library.domain.interfaces.use_cases.get_library_stats import (
+    IGetLibraryStatsUseCase,
+)
+from modules.library.domain.interfaces.use_cases.sync_library import ISyncLibraryUseCase
+from modules.library.infrastructure.repos.library_repository import (
+    FirestoreLibraryRepository,
+)
 from modules.platforms.infrastructure.clients.epic_auth_client import EpicAuthClient
 from modules.platforms.infrastructure.clients.gog_auth_client import GogAuthClient
 from modules.platforms.infrastructure.clients.psn_auth_client import PsnAuthClient
@@ -36,6 +47,7 @@ from shared.domain.interfaces.epic_auth_client import IEpicAuthClient
 from shared.domain.interfaces.firebase_auth import IFirebaseAuthProvider
 from shared.domain.interfaces.gog_auth_client import IGogAuthClient
 from shared.domain.interfaces.hltb_client import IHltbClient
+from shared.domain.interfaces.i_game_reader import IGameReader
 from shared.domain.interfaces.i_platform_reader import IPlatformReader
 from shared.domain.interfaces.i_wishlist_reader import IWishlistReader
 from shared.domain.interfaces.itad_client import IItadClient
@@ -50,6 +62,11 @@ from shared.infrastructure.security.firebase_auth_provider import FirebaseAuthPr
 from shared.infrastructure.security.token_blacklist import RedisTokenBlacklist
 
 _cleanup_registry = CleanupRegistry()
+
+
+# ---------------------------------------------------------------------------
+# Auth infrastructure
+# ---------------------------------------------------------------------------
 
 
 def get_firebase_auth_provider() -> IFirebaseAuthProvider:
@@ -165,3 +182,44 @@ def get_hltb_client() -> IHltbClient:
 
 def get_itad_client() -> IItadClient:
     return ItadClient()
+
+
+# ---------------------------------------------------------------------------
+# Library repository and use cases
+# (after platform clients — sync use case depends on them)
+# ---------------------------------------------------------------------------
+
+
+def get_library_repository() -> FirestoreLibraryRepository:
+    return FirestoreLibraryRepository()
+
+
+def get_game_reader(
+    repo: Annotated[FirestoreLibraryRepository, Depends(get_library_repository)],
+) -> IGameReader:
+    return repo
+
+
+def get_get_library_use_case(
+    repo: Annotated[FirestoreLibraryRepository, Depends(get_library_repository)],
+) -> IGetLibraryUseCase:
+    return GetLibraryUseCase(repo)
+
+
+def get_sync_library_use_case(
+    repo: Annotated[FirestoreLibraryRepository, Depends(get_library_repository)],
+    platform_reader: Annotated[IPlatformReader, Depends(get_platform_reader)],
+    steam_client: Annotated[ISteamAuthClient, Depends(get_steam_auth_client)],
+    epic_client: Annotated[IEpicAuthClient, Depends(get_epic_auth_client)],
+    gog_client: Annotated[IGogAuthClient, Depends(get_gog_auth_client)],
+    psn_client: Annotated[IPsnAuthClient, Depends(get_psn_auth_client)],
+) -> ISyncLibraryUseCase:
+    return SyncLibraryUseCase(
+        repo, platform_reader, steam_client, epic_client, gog_client, psn_client
+    )
+
+
+def get_get_library_stats_use_case(
+    repo: Annotated[FirestoreLibraryRepository, Depends(get_library_repository)],
+) -> IGetLibraryStatsUseCase:
+    return GetLibraryStatsUseCase(repo)

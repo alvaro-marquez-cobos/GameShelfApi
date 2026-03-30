@@ -59,6 +59,9 @@ class FirestorePlatformRepository(BaseFirestoreRepository, IPlatformRepository, 
     async def get_linked_platforms(self, uid: str) -> list[LinkedPlatform]:
         return await self.get_linked(uid)
 
+    async def get_platform_tokens(self, uid: str, platform: Platform) -> dict[str, Any] | None:
+        return await self.get_tokens(uid, platform)
+
 
 def _doc_to_linked_platform(doc: dict[str, Any]) -> LinkedPlatform:
     return LinkedPlatform(
