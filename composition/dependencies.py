@@ -26,9 +26,14 @@ from modules.games.infrastructure.clients.itad_client import ItadClient
 from modules.games.infrastructure.clients.protondb_client import ProtonDbClient
 from modules.games.infrastructure.clients.steam_metadata_client import SteamMetadataClient
 from modules.games.infrastructure.repos.game_repository import FirestoreGameRepository
+from modules.home.application.get_home_use_case import GetHomeUseCase
+from modules.home.domain.interfaces.use_cases.get_home import IGetHomeUseCase
 from modules.library.application.get_library_stats_use_case import GetLibraryStatsUseCase
 from modules.library.application.get_library_use_case import GetLibraryUseCase
 from modules.library.application.sync_library_use_case import SyncLibraryUseCase
+from modules.library.domain.interfaces.repositories.i_library_repository import (
+    ILibraryRepository,
+)
 from modules.library.domain.interfaces.use_cases.get_library import IGetLibraryUseCase
 from modules.library.domain.interfaces.use_cases.get_library_stats import (
     IGetLibraryStatsUseCase,
@@ -44,6 +49,8 @@ from modules.platforms.infrastructure.clients.steam_auth_client import SteamAuth
 from modules.platforms.infrastructure.repos.platform_repository import (
     FirestorePlatformRepository,
 )
+from modules.search.application.search_use_case import SearchGamesUseCase
+from modules.search.domain.interfaces.use_cases.search_games import ISearchGamesUseCase
 from modules.wishlist.application.add_to_wishlist_use_case import AddToWishlistUseCase
 from modules.wishlist.application.check_wishlist_use_case import CheckWishlistUseCase
 from modules.wishlist.application.get_wishlist_use_case import GetWishlistUseCase
@@ -298,3 +305,29 @@ def get_get_game_dlcs_use_case(
     game_reader: Annotated[IGameReader, Depends(get_game_reader)],
 ) -> IGetGameDlcsUseCase:
     return GetGameDlcsUseCase(repo, steam_metadata, game_reader)
+
+
+# ---------------------------------------------------------------------------
+# Search use case
+# ---------------------------------------------------------------------------
+
+
+def get_search_games_use_case(
+    itad_client: Annotated[IItadClient, Depends(get_itad_client)],
+    game_reader: Annotated[IGameReader, Depends(get_game_reader)],
+    wishlist_reader: Annotated[IWishlistReader, Depends(get_wishlist_reader)],
+) -> ISearchGamesUseCase:
+    return SearchGamesUseCase(itad_client, game_reader, wishlist_reader)
+
+
+# ---------------------------------------------------------------------------
+# Home use case
+# ---------------------------------------------------------------------------
+
+
+def get_get_home_use_case(
+    steam_client: Annotated[ISteamAuthClient, Depends(get_steam_auth_client)],
+    library_repo: Annotated[ILibraryRepository, Depends(get_library_repository)],
+    platform_reader: Annotated[IPlatformReader, Depends(get_platform_reader)],
+) -> IGetHomeUseCase:
+    return GetHomeUseCase(steam_client, library_repo, platform_reader)
