@@ -17,7 +17,7 @@ class BaseFirestoreRepository:
     """
 
     def __init__(self, client: firestore_v1.AsyncClient) -> None:
-        self._db = client
+        self._db: Any = client
 
     # ------------------------------------------------------------------
     # Top-level collection helpers

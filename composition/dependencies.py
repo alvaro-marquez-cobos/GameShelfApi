@@ -25,11 +25,19 @@ from modules.platforms.infrastructure.clients.epic_auth_client import EpicAuthCl
 from modules.platforms.infrastructure.clients.gog_auth_client import GogAuthClient
 from modules.platforms.infrastructure.clients.psn_auth_client import PsnAuthClient
 from modules.platforms.infrastructure.clients.steam_auth_client import SteamAuthClient
+from modules.platforms.infrastructure.repos.platform_repository import (
+    FirestorePlatformRepository,
+)
+from modules.wishlist.infrastructure.repos.wishlist_repository import (
+    FirestoreWishlistRepository,
+)
 from shared.domain.interfaces.cleanup_registry import ICleanupRegistry
 from shared.domain.interfaces.epic_auth_client import IEpicAuthClient
 from shared.domain.interfaces.firebase_auth import IFirebaseAuthProvider
 from shared.domain.interfaces.gog_auth_client import IGogAuthClient
 from shared.domain.interfaces.hltb_client import IHltbClient
+from shared.domain.interfaces.i_platform_reader import IPlatformReader
+from shared.domain.interfaces.i_wishlist_reader import IWishlistReader
 from shared.domain.interfaces.itad_client import IItadClient
 from shared.domain.interfaces.protondb_client import IProtonDbClient
 from shared.domain.interfaces.psn_auth_client import IPsnAuthClient
@@ -85,6 +93,36 @@ def get_get_profile_use_case(
     user_repository: Annotated[IUserRepository, Depends(get_user_repository)],
 ) -> IGetProfileUseCase:
     return GetProfileUseCase(user_repository)
+
+
+# ---------------------------------------------------------------------------
+# Platform repository
+# ---------------------------------------------------------------------------
+
+
+def get_platform_repository() -> FirestorePlatformRepository:
+    return FirestorePlatformRepository()
+
+
+def get_platform_reader(
+    repo: Annotated[FirestorePlatformRepository, Depends(get_platform_repository)],
+) -> IPlatformReader:
+    return repo
+
+
+# ---------------------------------------------------------------------------
+# Wishlist repository
+# ---------------------------------------------------------------------------
+
+
+def get_wishlist_repository() -> FirestoreWishlistRepository:
+    return FirestoreWishlistRepository()
+
+
+def get_wishlist_reader(
+    repo: Annotated[FirestoreWishlistRepository, Depends(get_wishlist_repository)],
+) -> IWishlistReader:
+    return repo
 
 
 # ---------------------------------------------------------------------------
