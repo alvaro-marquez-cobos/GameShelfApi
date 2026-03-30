@@ -17,10 +17,15 @@ from modules.auth.domain.interfaces.use_cases.get_profile import IGetProfileUseC
 from modules.auth.domain.interfaces.use_cases.logout import ILogoutUseCase
 from modules.auth.domain.interfaces.use_cases.sync_user import ISyncUserUseCase
 from modules.auth.infrastructure.repos.user_repository import FirestoreUserRepository
+from modules.games.application.get_game_detail_use_case import GetGameDetailUseCase
+from modules.games.application.get_game_dlcs_use_case import GetGameDlcsUseCase
+from modules.games.domain.interfaces.use_cases.get_game_detail import IGetGameDetailUseCase
+from modules.games.domain.interfaces.use_cases.get_game_dlcs import IGetGameDlcsUseCase
 from modules.games.infrastructure.clients.hltb_client import HltbClient
 from modules.games.infrastructure.clients.itad_client import ItadClient
 from modules.games.infrastructure.clients.protondb_client import ProtonDbClient
 from modules.games.infrastructure.clients.steam_metadata_client import SteamMetadataClient
+from modules.games.infrastructure.repos.game_repository import FirestoreGameRepository
 from modules.library.application.get_library_stats_use_case import GetLibraryStatsUseCase
 from modules.library.application.get_library_use_case import GetLibraryUseCase
 from modules.library.application.sync_library_use_case import SyncLibraryUseCase
@@ -265,3 +270,31 @@ def get_check_wishlist_use_case(
     repo: Annotated[FirestoreWishlistRepository, Depends(get_wishlist_repository)],
 ) -> ICheckWishlistUseCase:
     return CheckWishlistUseCase(repo)
+
+
+# ---------------------------------------------------------------------------
+# Games repository and use cases
+# ---------------------------------------------------------------------------
+
+
+def get_game_repository() -> FirestoreGameRepository:
+    return FirestoreGameRepository()
+
+
+def get_get_game_detail_use_case(
+    repo: Annotated[FirestoreGameRepository, Depends(get_game_repository)],
+    steam_metadata: Annotated[ISteamMetadataClient, Depends(get_steam_metadata_client)],
+    protondb: Annotated[IProtonDbClient, Depends(get_protondb_client)],
+    hltb: Annotated[IHltbClient, Depends(get_hltb_client)],
+    itad: Annotated[IItadClient, Depends(get_itad_client)],
+    wishlist_reader: Annotated[IWishlistReader, Depends(get_wishlist_reader)],
+) -> IGetGameDetailUseCase:
+    return GetGameDetailUseCase(repo, steam_metadata, protondb, hltb, itad, wishlist_reader)
+
+
+def get_get_game_dlcs_use_case(
+    repo: Annotated[FirestoreGameRepository, Depends(get_game_repository)],
+    steam_metadata: Annotated[ISteamMetadataClient, Depends(get_steam_metadata_client)],
+    game_reader: Annotated[IGameReader, Depends(get_game_reader)],
+) -> IGetGameDlcsUseCase:
+    return GetGameDlcsUseCase(repo, steam_metadata, game_reader)
