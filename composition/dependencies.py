@@ -42,6 +42,24 @@ from modules.library.domain.interfaces.use_cases.sync_library import ISyncLibrar
 from modules.library.infrastructure.repos.library_repository import (
     FirestoreLibraryRepository,
 )
+from modules.platforms.application.get_linked_platforms_use_case import (
+    GetLinkedPlatformsUseCase,
+)
+from modules.platforms.application.link_epic_use_case import LinkEpicUseCase
+from modules.platforms.application.link_gog_use_case import LinkGogUseCase
+from modules.platforms.application.link_psn_use_case import LinkPsnUseCase
+from modules.platforms.application.link_steam_use_case import LinkSteamUseCase
+from modules.platforms.application.unlink_platform_use_case import UnlinkPlatformUseCase
+from modules.platforms.domain.interfaces.use_cases.get_linked_platforms import (
+    IGetLinkedPlatformsUseCase,
+)
+from modules.platforms.domain.interfaces.use_cases.link_epic import ILinkEpicUseCase
+from modules.platforms.domain.interfaces.use_cases.link_gog import ILinkGogUseCase
+from modules.platforms.domain.interfaces.use_cases.link_psn import ILinkPsnUseCase
+from modules.platforms.domain.interfaces.use_cases.link_steam import ILinkSteamUseCase
+from modules.platforms.domain.interfaces.use_cases.unlink_platform import (
+    IUnlinkPlatformUseCase,
+)
 from modules.platforms.infrastructure.clients.epic_auth_client import EpicAuthClient
 from modules.platforms.infrastructure.clients.gog_auth_client import GogAuthClient
 from modules.platforms.infrastructure.clients.psn_auth_client import PsnAuthClient
@@ -318,6 +336,51 @@ def get_search_games_use_case(
     wishlist_reader: Annotated[IWishlistReader, Depends(get_wishlist_reader)],
 ) -> ISearchGamesUseCase:
     return SearchGamesUseCase(itad_client, game_reader, wishlist_reader)
+
+
+# ---------------------------------------------------------------------------
+# Platform use cases
+# ---------------------------------------------------------------------------
+
+
+def get_get_linked_platforms_use_case(
+    repo: Annotated[FirestorePlatformRepository, Depends(get_platform_repository)],
+) -> IGetLinkedPlatformsUseCase:
+    return GetLinkedPlatformsUseCase(repo)
+
+
+def get_link_steam_use_case(
+    steam_client: Annotated[ISteamAuthClient, Depends(get_steam_auth_client)],
+    repo: Annotated[FirestorePlatformRepository, Depends(get_platform_repository)],
+) -> ILinkSteamUseCase:
+    return LinkSteamUseCase(steam_client, repo)
+
+
+def get_link_epic_use_case(
+    epic_client: Annotated[IEpicAuthClient, Depends(get_epic_auth_client)],
+    repo: Annotated[FirestorePlatformRepository, Depends(get_platform_repository)],
+) -> ILinkEpicUseCase:
+    return LinkEpicUseCase(epic_client, repo)
+
+
+def get_link_gog_use_case(
+    gog_client: Annotated[IGogAuthClient, Depends(get_gog_auth_client)],
+    repo: Annotated[FirestorePlatformRepository, Depends(get_platform_repository)],
+) -> ILinkGogUseCase:
+    return LinkGogUseCase(gog_client, repo)
+
+
+def get_link_psn_use_case(
+    psn_client: Annotated[IPsnAuthClient, Depends(get_psn_auth_client)],
+    repo: Annotated[FirestorePlatformRepository, Depends(get_platform_repository)],
+) -> ILinkPsnUseCase:
+    return LinkPsnUseCase(psn_client, repo)
+
+
+def get_unlink_platform_use_case(
+    repo: Annotated[FirestorePlatformRepository, Depends(get_platform_repository)],
+) -> IUnlinkPlatformUseCase:
+    return UnlinkPlatformUseCase(repo)
 
 
 # ---------------------------------------------------------------------------
