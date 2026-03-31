@@ -16,6 +16,7 @@ def _make_doc(data: dict[str, Any] | None) -> MagicMock:
     doc = MagicMock()
     doc.exists = data is not None
     doc.to_dict.return_value = data or {}
+    doc.id = data.get("__doc_id", "") if data else ""
     return doc
 
 
@@ -78,6 +79,31 @@ async def test_get_linked_platforms_delegates_to_get_linked(
     assert result[0].platform == Platform.PSN
 
 
+@pytest.mark.asyncio
+async def test_get_linked_reads_legacy_frontend_shape(
+    repo: FirestorePlatformRepository,
+) -> None:
+    docs = [
+        _make_doc(
+            {
+                "externalUserId": "epic_account_7",
+                "linkedAt": "2026-01-03T00:00:00",
+                "__doc_id": "epic_games",
+            }
+        )
+    ]
+    (
+        repo._db.collection.return_value.document.return_value.collection.return_value.get
+    ) = AsyncMock(return_value=docs)
+
+    result = await repo.get_linked("uid_abc")
+
+    assert len(result) == 1
+    assert result[0].platform == Platform.EPIC
+    assert result[0].username == "epic_account_7"
+    assert result[0].linked_at == "2026-01-03T00:00:00"
+
+
 # ---------------------------------------------------------------------------
 # link
 # ---------------------------------------------------------------------------
@@ -135,6 +161,8 @@ async def test_get_tokens_returns_token_fields_only(repo: FirestorePlatformRepos
             "access_token": "tok_abc",
             "refresh_token": "ref_xyz",
             "token_expires_at": "2026-12-31T00:00:00",
+            "account_id": "acc_1",
+            "expires_at": "2027-01-01T00:00:00",
         }
     )
     (
@@ -147,6 +175,8 @@ async def test_get_tokens_returns_token_fields_only(repo: FirestorePlatformRepos
         "access_token": "tok_abc",
         "refresh_token": "ref_xyz",
         "token_expires_at": "2026-12-31T00:00:00",
+        "account_id": "acc_1",
+        "expires_at": "2027-01-01T00:00:00",
     }
 
 

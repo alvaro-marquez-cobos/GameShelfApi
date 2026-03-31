@@ -13,6 +13,7 @@ def _make_doc(data: dict[str, Any] | None) -> MagicMock:
     doc = MagicMock()
     doc.exists = data is not None
     doc.to_dict.return_value = data or {}
+    doc.id = data.get("__doc_id", "") if data else ""
     return doc
 
 
@@ -165,7 +166,10 @@ async def test_get_subdoc_returns_data_when_exists(
 
     result = await repo.get_subdoc("users", "uid_abc", "library", "steam_570")
 
-    assert result == {"game_id": "steam_570", "playtime_minutes": 120}
+    assert result is not None
+    assert result["game_id"] == "steam_570"
+    assert result["playtime_minutes"] == 120
+    assert result["__doc_id"] == ""
 
 
 @pytest.mark.asyncio

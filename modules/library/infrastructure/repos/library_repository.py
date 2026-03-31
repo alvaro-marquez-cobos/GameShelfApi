@@ -50,14 +50,28 @@ class FirestoreLibraryRepository(BaseFirestoreRepository, ILibraryRepository, IG
 
 
 def _doc_to_library_game(doc: dict[str, Any]) -> LibraryGame:
+    raw_platform = doc.get("platform", "")
+    game_id = str(doc.get("game_id") or doc.get("gameId") or doc.get("__doc_id", ""))
+    try:
+        platform = Platform.from_raw(raw_platform)
+    except ValueError:
+        platform_prefix = game_id.split("_", 1)[0] if "_" in game_id else ""
+        platform = Platform.from_raw(platform_prefix)
+
+    raw_last_played = doc.get("last_played", doc.get("lastPlayed"))
+    if raw_last_played is not None and not isinstance(raw_last_played, str):
+        to_iso = getattr(raw_last_played, "isoformat", None)
+        if callable(to_iso):
+            raw_last_played = str(to_iso())
+
     return LibraryGame(
-        game_id=doc["game_id"],
+        game_id=game_id,
         title=doc.get("title", ""),
-        platform=Platform(doc["platform"]),
-        cover_url=doc.get("cover_url"),
-        playtime_minutes=doc.get("playtime_minutes", 0),
-        last_played=doc.get("last_played"),
-        steam_app_id=doc.get("steam_app_id"),
+        platform=platform,
+        cover_url=doc.get("cover_url", doc.get("coverUrl")),
+        playtime_minutes=doc.get("playtime_minutes", doc.get("playtime", 0)),
+        last_played=raw_last_played,
+        steam_app_id=doc.get("steam_app_id", doc.get("steamAppId")),
         extra=doc.get("extra", {}),
     )
 

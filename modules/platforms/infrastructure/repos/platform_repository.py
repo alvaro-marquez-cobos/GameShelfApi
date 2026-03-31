@@ -46,11 +46,16 @@ class FirestorePlatformRepository(BaseFirestoreRepository, IPlatformRepository, 
         doc = await self.get_subdoc(_COLLECTION, uid, _SUBCOLLECTION, platform)
         if doc is None:
             return None
-        return {
-            k: v
-            for k, v in doc.items()
-            if k in ("access_token", "refresh_token", "token_expires_at")
+        allowed_keys = {
+            "access_token",
+            "refresh_token",
+            "steam_id",
+            "account_id",
+            "user_id",
+            "token_expires_at",
+            "expires_at",
         }
+        return {k: v for k, v in doc.items() if k in allowed_keys}
 
     async def store_tokens(self, uid: str, platform: Platform, tokens: dict[str, Any]) -> None:
         await self.update_subdoc(_COLLECTION, uid, _SUBCOLLECTION, platform, tokens)
@@ -64,9 +69,13 @@ class FirestorePlatformRepository(BaseFirestoreRepository, IPlatformRepository, 
 
 
 def _doc_to_linked_platform(doc: dict[str, Any]) -> LinkedPlatform:
+    raw_platform = doc.get("platform", doc.get("__doc_id", ""))
+    platform = Platform.from_raw(raw_platform)
+    username = doc.get("username") or doc.get("external_user_id") or doc.get("externalUserId") or ""
+    linked_at = doc.get("linked_at") or doc.get("linkedAt") or ""
     return LinkedPlatform(
-        platform=Platform(doc["platform"]),
-        username=doc.get("username", ""),
+        platform=platform,
+        username=username,
         avatar_url=doc.get("avatar_url"),
-        linked_at=doc.get("linked_at", ""),
+        linked_at=linked_at,
     )

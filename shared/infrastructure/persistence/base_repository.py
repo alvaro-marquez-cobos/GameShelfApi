@@ -72,7 +72,12 @@ class BaseFirestoreRepository:
         docs = (
             await self._db.collection(collection).document(doc_id).collection(subcollection).get()
         )
-        return [doc.to_dict() or {} for doc in docs]
+        result: list[dict[str, Any]] = []
+        for doc in docs:
+            data = doc.to_dict() or {}
+            data["__doc_id"] = doc.id
+            result.append(data)
+        return result
 
     async def get_subdoc(
         self,
@@ -91,7 +96,9 @@ class BaseFirestoreRepository:
         doc = await ref.get()
         if not doc.exists:
             return None
-        return doc.to_dict() or {}
+        data = doc.to_dict() or {}
+        data["__doc_id"] = doc.id
+        return data
 
     async def set_subdoc(
         self,
