@@ -42,18 +42,24 @@ from modules.library.infrastructure.repos.library_repository import (
 from modules.platforms.application.get_linked_platforms_use_case import (
     GetLinkedPlatformsUseCase,
 )
+from modules.platforms.application.link_epic_gdpr_use_case import LinkEpicGdprUseCase
 from modules.platforms.application.link_epic_use_case import LinkEpicUseCase
 from modules.platforms.application.link_gog_use_case import LinkGogUseCase
 from modules.platforms.application.link_psn_use_case import LinkPsnUseCase
+from modules.platforms.application.link_steam_manual_use_case import LinkSteamManualUseCase
 from modules.platforms.application.link_steam_use_case import LinkSteamUseCase
 from modules.platforms.application.unlink_platform_use_case import UnlinkPlatformUseCase
 from modules.platforms.domain.interfaces.use_cases.get_linked_platforms import (
     IGetLinkedPlatformsUseCase,
 )
 from modules.platforms.domain.interfaces.use_cases.link_epic import ILinkEpicUseCase
+from modules.platforms.domain.interfaces.use_cases.link_epic_gdpr import ILinkEpicGdprUseCase
 from modules.platforms.domain.interfaces.use_cases.link_gog import ILinkGogUseCase
 from modules.platforms.domain.interfaces.use_cases.link_psn import ILinkPsnUseCase
 from modules.platforms.domain.interfaces.use_cases.link_steam import ILinkSteamUseCase
+from modules.platforms.domain.interfaces.use_cases.link_steam_manual import (
+    ILinkSteamManualUseCase,
+)
 from modules.platforms.domain.interfaces.use_cases.unlink_platform import (
     IUnlinkPlatformUseCase,
 )
@@ -374,11 +380,26 @@ def get_link_steam_use_case(
     return LinkSteamUseCase(steam_client, repo)
 
 
+def get_link_steam_manual_use_case(
+    steam_client: Annotated[ISteamAuthClient, Depends(get_steam_auth_client)],
+    repo: Annotated[FirestorePlatformRepository, Depends(get_platform_repository)],
+) -> ILinkSteamManualUseCase:
+    return LinkSteamManualUseCase(steam_client, repo)
+
+
 def get_link_epic_use_case(
     epic_client: Annotated[IEpicAuthClient, Depends(get_epic_auth_client)],
     repo: Annotated[FirestorePlatformRepository, Depends(get_platform_repository)],
 ) -> ILinkEpicUseCase:
     return LinkEpicUseCase(epic_client, repo)
+
+
+def get_link_epic_gdpr_use_case(
+    epic_client: Annotated[IEpicAuthClient, Depends(get_epic_auth_client)],
+    platform_repo: Annotated[FirestorePlatformRepository, Depends(get_platform_repository)],
+    library_repo: Annotated[FirestoreLibraryRepository, Depends(get_library_repository)],
+) -> ILinkEpicGdprUseCase:
+    return LinkEpicGdprUseCase(epic_client, platform_repo, library_repo)
 
 
 def get_link_gog_use_case(
