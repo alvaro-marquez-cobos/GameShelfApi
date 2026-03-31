@@ -10,7 +10,7 @@ import logging
 import re
 from urllib.parse import urlencode
 
-from modules.platforms.domain.entities.steam import SteamGame, SteamPlayer
+from modules.platforms.domain.entities.steam import SteamChartsGame, SteamGame, SteamPlayer
 from shared.config import get_settings
 from shared.domain.interfaces.steam_auth_client import ISteamAuthClient
 from shared.infrastructure.http.base_client import BaseHttpClient
@@ -75,7 +75,7 @@ class SteamAuthClient(ISteamAuthClient):
         data = response.json().get("response", {})
         return [self._parse_game(g) for g in data.get("games", [])]
 
-    async def get_most_played_global(self, limit: int = 100) -> list[SteamGame]:
+    async def get_most_played_global(self, limit: int = 100) -> list[SteamChartsGame]:
         """Return the global most-played games chart."""
         async with steam_semaphore:
             response = await self._http.get(
@@ -88,7 +88,10 @@ class SteamAuthClient(ISteamAuthClient):
 
         ranks = response.json().get("response", {}).get("ranks", [])
         return [
-            SteamGame(app_id=entry["appid"], name="", playtime_forever=0)
+            SteamChartsGame(
+                app_id=entry["appid"],
+                current_players=entry.get("current_players", 0),
+            )
             for entry in ranks[:limit]
             if "appid" in entry
         ]

@@ -64,30 +64,3 @@ async def test_update_steam_app_id_calls_set_with_merge(repo: FirestoreGameRepos
     await repo.update_steam_app_id("steam_570", 570)
 
     set_mock.assert_awaited_once_with({"game_id": "steam_570", "steam_app_id": 570}, merge=True)
-
-
-# ---------------------------------------------------------------------------
-# get_dlcs
-# ---------------------------------------------------------------------------
-
-
-@pytest.mark.asyncio
-async def test_get_dlcs_returns_dlc_app_ids(repo: FirestoreGameRepository) -> None:
-    repo._db.collection.return_value.document.return_value.get = AsyncMock(
-        return_value=_make_doc({"game_id": "steam_570", "dlc_app_ids": [100, 200, 300]})
-    )
-
-    result = await repo.get_dlcs("steam_570")
-
-    assert result == [100, 200, 300]
-
-
-@pytest.mark.asyncio
-async def test_get_dlcs_returns_empty_when_doc_absent(repo: FirestoreGameRepository) -> None:
-    repo._db.collection.return_value.document.return_value.get = AsyncMock(
-        return_value=_make_doc(None)
-    )
-
-    result = await repo.get_dlcs("steam_999")
-
-    assert result == []

@@ -1,19 +1,5 @@
-"""Enums for library filtering and sorting."""
+"""Re-export library enums from shared for backward compatibility."""
 
-from enum import StrEnum
+from shared.domain.enums.library import LibrarySortBy, LibraryTab
 
-
-class LibraryTab(StrEnum):
-    """Tab filter for the user game library."""
-
-    ALL = "all"
-    PC = "pc"
-    CONSOLE = "console"
-
-
-class LibrarySortBy(StrEnum):
-    """Sort criteria for the user game library."""
-
-    ALPHABETICAL = "alphabetical"
-    LAST_PLAYED = "last_played"
-    PLAYTIME = "playtime"
+__all__ = ["LibrarySortBy", "LibraryTab"]

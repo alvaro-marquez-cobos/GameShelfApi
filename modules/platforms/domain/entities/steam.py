@@ -27,6 +27,21 @@ class SteamGame:
 
 
 @dataclass
+class SteamChartsGame:
+    """A game from Steam Charts most-played data.
+
+    Attributes:
+        app_id: Steam application identifier.
+        name: Display name of the game (may be empty from chart data).
+        current_players: Approximate concurrent player count.
+    """
+
+    app_id: int
+    name: str = ""
+    current_players: int = 0
+
+
+@dataclass
 class SteamPlayer:
     """Profile information for a Steam user.
 

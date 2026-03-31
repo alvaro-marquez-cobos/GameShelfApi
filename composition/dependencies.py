@@ -66,6 +66,20 @@ from modules.platforms.infrastructure.repos.platform_repository import (
 )
 from modules.search.application.search_use_case import SearchGamesUseCase
 from modules.search.domain.interfaces.use_cases.search_games import ISearchGamesUseCase
+from modules.settings.application.get_notification_prefs_use_case import GetNotificationPrefsUseCase
+from modules.settings.application.update_notification_prefs_use_case import (
+    UpdateNotificationPrefsUseCase,
+)
+from modules.settings.domain.interfaces.repositories.i_settings_repository import (
+    ISettingsRepository,
+)
+from modules.settings.domain.interfaces.use_cases.get_notification_prefs import (
+    IGetNotificationPrefsUseCase,
+)
+from modules.settings.domain.interfaces.use_cases.update_notification_prefs import (
+    IUpdateNotificationPrefsUseCase,
+)
+from modules.settings.infrastructure.repos.settings_repository import FirestoreSettingsRepository
 from modules.wishlist.application.add_to_wishlist_use_case import AddToWishlistUseCase
 from modules.wishlist.application.check_wishlist_use_case import CheckWishlistUseCase
 from modules.wishlist.application.get_wishlist_use_case import GetWishlistUseCase
@@ -398,3 +412,37 @@ def get_get_home_use_case(
     platform_reader: Annotated[IPlatformReader, Depends(get_platform_reader)],
 ) -> IGetHomeUseCase:
     return GetHomeUseCase(steam_client, library_reader, platform_reader)
+
+
+# ---------------------------------------------------------------------------
+# Settings repository and use cases
+# ---------------------------------------------------------------------------
+
+
+def get_settings_repository() -> ISettingsRepository:
+    return FirestoreSettingsRepository()
+
+
+def get_get_notification_prefs_use_case(
+    repo: Annotated[ISettingsRepository, Depends(get_settings_repository)],
+) -> IGetNotificationPrefsUseCase:
+    return GetNotificationPrefsUseCase(repo)
+
+
+def get_update_notification_prefs_use_case(
+    repo: Annotated[ISettingsRepository, Depends(get_settings_repository)],
+) -> IUpdateNotificationPrefsUseCase:
+    return UpdateNotificationPrefsUseCase(repo)
+
+
+# ---------------------------------------------------------------------------
+# Cleanup handlers registration
+# ---------------------------------------------------------------------------
+
+
+async def _cleanup_settings(uid: str) -> None:
+    """Lazy cleanup handler for settings module."""
+    await FirestoreSettingsRepository().delete_all(uid)
+
+
+_cleanup_registry.register("settings", _cleanup_settings)

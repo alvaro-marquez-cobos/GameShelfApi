@@ -2,7 +2,7 @@
 
 from abc import ABC, abstractmethod
 
-from modules.platforms.domain.entities.steam import SteamGame, SteamPlayer
+from modules.platforms.domain.entities.steam import SteamChartsGame, SteamGame, SteamPlayer
 
 
 class ISteamAuthClient(ABC):
@@ -27,7 +27,7 @@ class ISteamAuthClient(ABC):
         ...
 
     @abstractmethod
-    async def get_most_played_global(self, limit: int = 100) -> list[SteamGame]:
+    async def get_most_played_global(self, limit: int = 100) -> list[SteamChartsGame]:
         """Return the global most-played games chart.
 
         Args:
