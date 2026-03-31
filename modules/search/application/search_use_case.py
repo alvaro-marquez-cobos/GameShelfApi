@@ -35,6 +35,8 @@ class SearchGamesUseCase(ISearchGamesUseCase):
         if not itad_results:
             return []
 
+        itad_results = itad_results[:5]
+
         owned_ids, wishlist_ids = await asyncio.gather(
             self._game_reader.get_owned_game_ids(uid),
             self._wishlist_reader.get_wishlist_ids(uid),

@@ -6,6 +6,7 @@ from typing import Any
 
 from modules.home.domain.entities.home_data import HomeData, PopularGame
 from modules.home.domain.interfaces.use_cases.get_home import IGetHomeUseCase
+from modules.platforms.domain.entities.steam import SteamChartsGame
 from shared.domain.entities.library_game import LibraryGame
 from shared.domain.enums.platform import Platform
 from shared.domain.interfaces.i_library_reader import ILibraryReader
@@ -31,13 +32,13 @@ def _steam_game_to_library_game(game: Any) -> LibraryGame:
     )
 
 
-def _steam_game_to_popular(game: Any) -> PopularGame:
-    """Convert a SteamGame duck-typed object to a PopularGame."""
+def _steam_game_to_popular(game: SteamChartsGame) -> PopularGame:
+    """Convert a SteamChartsGame to a PopularGame."""
     return PopularGame(
         steam_app_id=game.app_id,
         title=game.name,
-        current_players=game.playtime_forever,
-        cover_url=game.header_image or None,
+        current_players=game.current_players,
+        cover_url=None,
     )
 
 

@@ -28,10 +28,3 @@ class FirestoreGameRepository(BaseFirestoreRepository, IGameRepository):
             .document(game_id)
             .set({"game_id": game_id, "steam_app_id": steam_app_id}, merge=True)
         )
-
-    async def get_dlcs(self, game_id: str) -> list[int]:
-        doc = await self.get_doc(_COLLECTION, game_id)
-        if doc is None:
-            return []
-        result: list[int] = doc.get("dlc_app_ids", [])
-        return result

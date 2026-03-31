@@ -16,8 +16,3 @@ class IGameRepository(ABC):
     async def update_steam_app_id(self, game_id: str, steam_app_id: int) -> None:
         """Persist a resolved Steam App ID on an existing game document."""
         ...
-
-    @abstractmethod
-    async def get_dlcs(self, game_id: str) -> list[int]:
-        """Return the list of Steam App IDs for DLCs owned by this game."""
-        ...
