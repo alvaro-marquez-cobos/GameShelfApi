@@ -1,17 +1,13 @@
 """Interface for user library persistence operations."""
 
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 
-from modules.library.domain.entities.library_game import LibraryGame
+from shared.domain.entities.library_game import LibraryGame
+from shared.domain.interfaces.i_library_reader import ILibraryReader
 
 
-class ILibraryRepository(ABC):
+class ILibraryRepository(ILibraryReader):
     """Contract for storing and retrieving the user's game library."""
-
-    @abstractmethod
-    async def get_games(self, uid: str) -> list[LibraryGame]:
-        """Return all games in the user's library."""
-        ...
 
     @abstractmethod
     async def get_game(self, uid: str, game_id: str) -> LibraryGame | None:

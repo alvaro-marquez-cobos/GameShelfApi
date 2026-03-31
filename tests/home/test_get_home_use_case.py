@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from modules.home.application.get_home_use_case import GetHomeUseCase
-from modules.library.domain.entities.library_game import LibraryGame
+from shared.domain.entities.library_game import LibraryGame
 from shared.domain.entities.linked_platform import LinkedPlatform
 from shared.domain.enums.platform import Platform
 
