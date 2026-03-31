@@ -16,6 +16,7 @@ def _make_doc(data: dict[str, Any] | None) -> MagicMock:
     doc = MagicMock()
     doc.exists = data is not None
     doc.to_dict.return_value = data or {}
+    doc.id = data.get("__doc_id", "") if data else ""
     return doc
 
 
@@ -102,6 +103,31 @@ async def test_get_game_returns_none_when_missing(repo: FirestoreLibraryReposito
     result = await repo.get_game("uid_abc", "steam_9999")
 
     assert result is None
+
+
+@pytest.mark.asyncio
+async def test_get_game_reads_legacy_frontend_shape(repo: FirestoreLibraryRepository) -> None:
+    doc = _make_doc(
+        {
+            "title": "Fortnite",
+            "platform": "EPIC_GAMES",
+            "coverUrl": "https://example.com/cover.png",
+            "playtime": 120,
+            "lastPlayed": "2026-01-01T00:00:00+00:00",
+            "steamAppId": None,
+            "__doc_id": "epic_fn_fortnite",
+        }
+    )
+    (
+        repo._db.collection.return_value.document.return_value.collection.return_value.document.return_value.get
+    ) = AsyncMock(return_value=doc)
+
+    result = await repo.get_game("uid_abc", "epic_fn_fortnite")
+
+    assert result is not None
+    assert result.game_id == "epic_fn_fortnite"
+    assert result.platform == Platform.EPIC
+    assert result.playtime_minutes == 120
 
 
 # ---------------------------------------------------------------------------

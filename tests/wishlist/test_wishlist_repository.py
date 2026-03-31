@@ -16,6 +16,7 @@ def _make_doc(data: dict[str, Any] | None) -> MagicMock:
     doc = MagicMock()
     doc.exists = data is not None
     doc.to_dict.return_value = data or {}
+    doc.id = data.get("__doc_id", "") if data else ""
     return doc
 
 
@@ -76,6 +77,30 @@ async def test_get_items_returns_empty_list_when_wishlist_empty(
     result = await repo.get_items("uid_abc")
 
     assert result == []
+
+
+@pytest.mark.asyncio
+async def test_get_items_reads_legacy_frontend_shape(repo: FirestoreWishlistRepository) -> None:
+    docs = [
+        _make_doc(
+            {
+                "gameId": "steam_570",
+                "title": "Dota 2",
+                "coverUrl": "https://example.com/dota2.png",
+                "addedAt": "2026-01-01T00:00:00",
+                "__doc_id": "steam_570",
+            }
+        )
+    ]
+    (
+        repo._db.collection.return_value.document.return_value.collection.return_value.get
+    ) = AsyncMock(return_value=docs)
+
+    result = await repo.get_items("uid_abc")
+
+    assert len(result) == 1
+    assert result[0].game_id == "steam_570"
+    assert result[0].platform == Platform.STEAM
 
 
 # ---------------------------------------------------------------------------

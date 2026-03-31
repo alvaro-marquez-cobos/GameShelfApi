@@ -54,10 +54,22 @@ class FirestoreWishlistRepository(BaseFirestoreRepository, IWishlistRepository, 
 
 
 def _doc_to_wishlist_item(doc: dict[str, Any]) -> WishlistItem:
+    game_id = str(doc.get("game_id") or doc.get("gameId") or doc.get("__doc_id", ""))
+    raw_platform = doc.get("platform", "")
+    try:
+        platform = Platform.from_raw(raw_platform)
+    except ValueError:
+        platform_prefix = game_id.split("_", 1)[0] if "_" in game_id else ""
+        platform = Platform.from_raw(platform_prefix)
+
+    raw_added_at = doc.get("added_at", doc.get("addedAt", ""))
+    if hasattr(raw_added_at, "isoformat"):
+        raw_added_at = raw_added_at.isoformat()
+
     return WishlistItem(
-        game_id=doc["game_id"],
+        game_id=game_id,
         title=doc.get("title", ""),
-        platform=Platform(doc["platform"]),
-        cover_url=doc.get("cover_url"),
-        added_at=doc.get("added_at", ""),
+        platform=platform,
+        cover_url=doc.get("cover_url", doc.get("coverUrl")),
+        added_at=raw_added_at,
     )
