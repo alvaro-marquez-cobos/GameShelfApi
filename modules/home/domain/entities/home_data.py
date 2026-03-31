@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass, field
 
-from modules.library.domain.entities.library_game import LibraryGame
+from shared.domain.entities.library_game import LibraryGame
 
 
 @dataclass

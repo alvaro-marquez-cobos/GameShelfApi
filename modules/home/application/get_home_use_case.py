@@ -6,11 +6,9 @@ from typing import Any
 
 from modules.home.domain.entities.home_data import HomeData, PopularGame
 from modules.home.domain.interfaces.use_cases.get_home import IGetHomeUseCase
-from modules.library.domain.entities.library_game import LibraryGame
-from modules.library.domain.interfaces.repositories.i_library_repository import (
-    ILibraryRepository,
-)
+from shared.domain.entities.library_game import LibraryGame
 from shared.domain.enums.platform import Platform
+from shared.domain.interfaces.i_library_reader import ILibraryReader
 from shared.domain.interfaces.i_platform_reader import IPlatformReader
 from shared.domain.interfaces.steam_auth_client import ISteamAuthClient
 
@@ -49,11 +47,11 @@ class GetHomeUseCase(IGetHomeUseCase):
     def __init__(
         self,
         steam_client: ISteamAuthClient,
-        library_repo: ILibraryRepository,
+        library_reader: ILibraryReader,
         platform_reader: IPlatformReader,
     ) -> None:
         self._steam = steam_client
-        self._library = library_repo
+        self._library = library_reader
         self._platform_reader = platform_reader
 
     async def execute(self, uid: str) -> HomeData:

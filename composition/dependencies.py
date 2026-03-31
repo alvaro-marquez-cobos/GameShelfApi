@@ -31,9 +31,6 @@ from modules.home.domain.interfaces.use_cases.get_home import IGetHomeUseCase
 from modules.library.application.get_library_stats_use_case import GetLibraryStatsUseCase
 from modules.library.application.get_library_use_case import GetLibraryUseCase
 from modules.library.application.sync_library_use_case import SyncLibraryUseCase
-from modules.library.domain.interfaces.repositories.i_library_repository import (
-    ILibraryRepository,
-)
 from modules.library.domain.interfaces.use_cases.get_library import IGetLibraryUseCase
 from modules.library.domain.interfaces.use_cases.get_library_stats import (
     IGetLibraryStatsUseCase,
@@ -72,6 +69,7 @@ from shared.domain.interfaces.firebase_auth import IFirebaseAuthProvider
 from shared.domain.interfaces.gog_auth_client import IGogAuthClient
 from shared.domain.interfaces.hltb_client import IHltbClient
 from shared.domain.interfaces.i_game_reader import IGameReader
+from shared.domain.interfaces.i_library_reader import ILibraryReader
 from shared.domain.interfaces.i_platform_reader import IPlatformReader
 from shared.domain.interfaces.i_wishlist_reader import IWishlistReader
 from shared.domain.interfaces.itad_client import IItadClient
@@ -224,6 +222,12 @@ def get_game_reader(
     return repo
 
 
+def get_library_reader(
+    repo: Annotated[FirestoreLibraryRepository, Depends(get_library_repository)],
+) -> ILibraryReader:
+    return repo
+
+
 def get_get_library_use_case(
     repo: Annotated[FirestoreLibraryRepository, Depends(get_library_repository)],
 ) -> IGetLibraryUseCase:
@@ -327,7 +331,7 @@ def get_search_games_use_case(
 
 def get_get_home_use_case(
     steam_client: Annotated[ISteamAuthClient, Depends(get_steam_auth_client)],
-    library_repo: Annotated[ILibraryRepository, Depends(get_library_repository)],
+    library_reader: Annotated[ILibraryReader, Depends(get_library_reader)],
     platform_reader: Annotated[IPlatformReader, Depends(get_platform_reader)],
 ) -> IGetHomeUseCase:
-    return GetHomeUseCase(steam_client, library_repo, platform_reader)
+    return GetHomeUseCase(steam_client, library_reader, platform_reader)

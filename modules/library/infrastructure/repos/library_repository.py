@@ -7,10 +7,10 @@ Also implements IGameReader for cross-module access.
 import asyncio
 from typing import Any
 
-from modules.library.domain.entities.library_game import LibraryGame
 from modules.library.domain.interfaces.repositories.i_library_repository import (
     ILibraryRepository,
 )
+from shared.domain.entities.library_game import LibraryGame
 from shared.domain.enums.platform import Platform
 from shared.domain.interfaces.i_game_reader import IGameReader
 from shared.infrastructure.database.firestore import get_firestore
