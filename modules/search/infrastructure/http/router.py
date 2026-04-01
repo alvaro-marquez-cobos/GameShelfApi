@@ -9,7 +9,6 @@ from composition.security import get_current_user
 from modules.search.domain.interfaces.use_cases.search_games import ISearchGamesUseCase
 from modules.search.infrastructure.http.schemas import SearchResponse, SearchResultResponse
 from shared.domain.entities.user import AuthenticatedUser
-from shared.domain.enums.platform import Platform
 
 router = APIRouter()
 
@@ -28,7 +27,7 @@ async def search_games(
             cover_url=item.cover_url,
             steam_app_id=item.steam_app_id,
             is_owned=item.is_owned,
-            owned_platforms=[Platform.STEAM] if item.is_owned else [],
+            owned_platforms=item.owned_platforms,
             is_in_wishlist=item.is_in_wishlist,
         )
         for item in results

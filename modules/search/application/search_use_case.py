@@ -5,6 +5,7 @@ import logging
 
 from modules.search.domain.entities.search_result import SearchResult
 from modules.search.domain.interfaces.use_cases.search_games import ISearchGamesUseCase
+from shared.domain.enums.platform import Platform
 from shared.domain.interfaces.i_game_reader import IGameReader
 from shared.domain.interfaces.i_wishlist_reader import IWishlistReader
 from shared.domain.interfaces.itad_client import IItadClient
@@ -53,13 +54,17 @@ class SearchGamesUseCase(ISearchGamesUseCase):
         results: list[SearchResult] = []
         for item in itad_results:
             steam_game_id = f"steam_{item.steam_app_id}" if item.steam_app_id else None
+            owned_platforms: list[Platform] = []
+            if steam_game_id and steam_game_id in owned_ids:
+                owned_platforms.append(Platform.STEAM)
             results.append(
                 SearchResult(
                     id=item.id,
                     title=item.title,
                     cover_url=item.cover_url,
                     steam_app_id=item.steam_app_id,
-                    is_owned=steam_game_id in owned_ids if steam_game_id else False,
+                    is_owned=bool(owned_platforms),
+                    owned_platforms=owned_platforms,
                     is_in_wishlist=item.id in wishlist_ids,
                 )
             )
