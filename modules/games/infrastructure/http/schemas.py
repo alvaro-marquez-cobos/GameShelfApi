@@ -59,6 +59,8 @@ class DealResponse(BaseModel):
 class GameDetailResponse(BaseModel):
     """Aggregated game detail response."""
 
+    model_config = ConfigDict(populate_by_name=True)
+
     game: GameSummaryResponse
     proton_db: ProtonDbResponse | None = Field(default=None, alias="protonDb")
     how_long_to_beat: HowLongToBeatResponse | None = Field(default=None, alias="howLongToBeat")
@@ -79,15 +81,6 @@ class DlcResponse(BaseModel):
 class GetGameDlcsResponse(BaseModel):
     """DLC list response wrapper."""
 
+    model_config = ConfigDict(populate_by_name=True)
+
     dlcs: list[DlcResponse]
-    model_config = ConfigDict(populate_by_name=True)
-
-    model_config = ConfigDict(populate_by_name=True)
-
-    model_config = ConfigDict(populate_by_name=True)
-
-    model_config = ConfigDict(populate_by_name=True)
-
-    model_config = ConfigDict(populate_by_name=True)
-
-    model_config = ConfigDict(populate_by_name=True)
