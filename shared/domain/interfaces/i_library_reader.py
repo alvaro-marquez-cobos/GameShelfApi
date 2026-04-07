@@ -16,3 +16,12 @@ class ILibraryReader(ABC):
     async def get_games(self, uid: str) -> list[LibraryGame]:
         """Return all games in the user's library."""
         ...
+
+    @abstractmethod
+    async def get_most_played(self, uid: str, limit: int) -> list[LibraryGame]:
+        """Return the top ``limit`` games ordered by playtime descending.
+
+        Implementations should use a native query rather than loading the full
+        library, so reads are bounded to ``limit`` documents.
+        """
+        ...

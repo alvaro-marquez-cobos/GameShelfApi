@@ -67,7 +67,7 @@ class GetHomeUseCase(IGetHomeUseCase):
         )
         results = await asyncio.gather(
             recently_played_coro,
-            self._library.get_games(uid),
+            self._library.get_most_played(uid, _MOST_PLAYED_LIMIT),
             self._steam.get_most_played_global(limit=_POPULAR_LIMIT),
             return_exceptions=True,
         )
@@ -85,15 +85,14 @@ class GetHomeUseCase(IGetHomeUseCase):
         else:
             recently_played = None
 
-        # Most played (from library)
-        library_raw = results[1]
+        # Most played (from library) — already ordered and limited by the repo query
+        most_played_raw = results[1]
         most_played: list[LibraryGame]
-        if isinstance(library_raw, BaseException):
-            logger.warning("Failed to fetch library: %s", library_raw)
+        if isinstance(most_played_raw, BaseException):
+            logger.warning("Failed to fetch most played: %s", most_played_raw)
             most_played = []
         else:
-            sorted_games = sorted(library_raw, key=lambda g: g.playtime_minutes, reverse=True)
-            most_played = sorted_games[:_MOST_PLAYED_LIMIT]
+            most_played = list(most_played_raw)
 
         # Popular now (global)
         popular_raw = results[2]

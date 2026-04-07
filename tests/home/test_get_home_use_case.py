@@ -69,7 +69,7 @@ async def test_full_home_data_with_steam_linked(
         LinkedPlatform(platform=Platform.STEAM, username="76561198000000001")
     ]
     steam_client.get_recently_played.return_value = [_steam_game(570, "Dota 2", playtime=200)]
-    library_repo.get_games.return_value = [
+    library_repo.get_most_played.return_value = [
         _library_game("steam_570", playtime=500),
         _library_game("steam_440", playtime=300),
         _library_game("steam_730", playtime=100),
@@ -97,8 +97,9 @@ async def test_most_played_capped_at_five(
     platform_reader: AsyncMock,
 ) -> None:
     platform_reader.get_linked_platforms.return_value = []
-    library_repo.get_games.return_value = [
-        _library_game(f"steam_{i}", playtime=i * 10) for i in range(10)
+    # Repo already applies order + limit=5, so the mock returns the top 5 pre-sorted.
+    library_repo.get_most_played.return_value = [
+        _library_game(f"steam_{i}", playtime=i * 10) for i in range(9, 4, -1)
     ]
     steam_client.get_most_played_global.return_value = []
 
@@ -122,7 +123,7 @@ async def test_recently_played_is_none_when_steam_not_linked(
     platform_reader: AsyncMock,
 ) -> None:
     platform_reader.get_linked_platforms.return_value = []
-    library_repo.get_games.return_value = []
+    library_repo.get_most_played.return_value = []
     steam_client.get_most_played_global.return_value = []
 
     result = await use_case.execute("uid_abc")
@@ -147,7 +148,7 @@ async def test_recently_played_failure_returns_none(
         LinkedPlatform(platform=Platform.STEAM, username="76561198000000001")
     ]
     steam_client.get_recently_played.side_effect = Exception("Steam API down")
-    library_repo.get_games.return_value = []
+    library_repo.get_most_played.return_value = []
     steam_client.get_most_played_global.return_value = []
 
     result = await use_case.execute("uid_abc")
@@ -164,7 +165,7 @@ async def test_popular_now_failure_returns_none(
     platform_reader: AsyncMock,
 ) -> None:
     platform_reader.get_linked_platforms.return_value = []
-    library_repo.get_games.return_value = [_library_game("steam_570")]
+    library_repo.get_most_played.return_value = [_library_game("steam_570")]
     steam_client.get_most_played_global.side_effect = Exception("Steam Charts down")
 
     result = await use_case.execute("uid_abc")
