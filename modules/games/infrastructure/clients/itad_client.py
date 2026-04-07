@@ -206,6 +206,7 @@ class ItadClient(IItadClient):
     @cached(
         ttl=3600,
         key_builder=lambda self, itad_game_id: itad_info_key(itad_game_id),
+        deserializer=lambda data: ItadGameInfo(**data) if data is not None else None,
     )
     async def get_game_info(self, itad_game_id: str) -> ItadGameInfo | None:
         """Fetch metadata for a game from ITAD (cached 1 hour)."""

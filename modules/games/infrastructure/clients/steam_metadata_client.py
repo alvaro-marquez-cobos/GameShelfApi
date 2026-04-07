@@ -45,7 +45,11 @@ class SteamMetadataClient(ISteamMetadataClient):
     def __init__(self) -> None:
         self._http = BaseHttpClient(base_url=_STORE_BASE)
 
-    @cached(ttl=3600, key_builder=lambda self, app_id: steam_app_key(app_id))
+    @cached(
+        ttl=3600,
+        key_builder=lambda self, app_id: steam_app_key(app_id),
+        deserializer=lambda data: SteamAppDetails(**data) if data is not None else None,
+    )
     async def get_app_details(self, app_id: int) -> SteamAppDetails | None:
         """Fetch detailed metadata for a Steam application (cached 1 hour)."""
         async with steam_semaphore:

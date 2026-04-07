@@ -9,14 +9,35 @@ import functools
 import json
 import logging
 from collections.abc import Callable, Coroutine
+from dataclasses import asdict, is_dataclass
 from typing import Any
 
 logger = logging.getLogger(__name__)
+
+Serializer = Callable[[Any], Any]
+Deserializer = Callable[[Any], Any]
+
+
+def _to_jsonable(value: Any) -> Any:
+    """Convert a Python object into a JSON-serializable structure."""
+    if value is None or isinstance(value, str | int | float | bool):
+        return value
+    if isinstance(value, list | tuple | set):
+        return [_to_jsonable(item) for item in value]
+    if isinstance(value, dict):
+        return {str(key): _to_jsonable(item) for key, item in value.items()}
+    if is_dataclass(value) and not isinstance(value, type):
+        return {key: _to_jsonable(item) for key, item in asdict(value).items()}
+    if hasattr(value, "model_dump"):
+        return value.model_dump(mode="json")
+    raise TypeError(f"Object of type {type(value).__name__} is not JSON serializable")
 
 
 def cached(
     ttl: int,
     key_builder: Callable[..., str],
+    serializer: Serializer | None = None,
+    deserializer: Deserializer | None = None,
 ) -> Callable[[Callable[..., Coroutine[Any, Any, Any]]], Callable[..., Coroutine[Any, Any, Any]]]:
     """Decorator that caches async function results in Redis.
 
@@ -24,6 +45,8 @@ def cached(
         ttl: Time-to-live in seconds for the cached value.
         key_builder: Callable that receives the same args as the decorated
             function and returns the Redis key string.
+        serializer: Optional callable used before ``json.dumps``.
+        deserializer: Optional callable used after ``json.loads``.
     """
 
     def decorator(
@@ -38,7 +61,15 @@ def cached(
                 redis = get_redis()
                 cached_value = await redis.get(key)
                 if cached_value is not None:
-                    return json.loads(cached_value)
+                    decoded = json.loads(cached_value)
+                    if deserializer is not None:
+                        try:
+                            return deserializer(decoded)
+                        except Exception:
+                            logger.warning("Cache decode failed for key %s, refreshing value", key)
+                            await redis.delete(key)
+                    else:
+                        return decoded
             except Exception:
                 logger.warning("Cache read failed for key %s, proceeding without cache", key)
 
@@ -46,7 +77,8 @@ def cached(
 
             try:
                 redis = get_redis()
-                await redis.setex(key, ttl, json.dumps(result))
+                payload = serializer(result) if serializer is not None else _to_jsonable(result)
+                await redis.setex(key, ttl, json.dumps(payload))
             except Exception:
                 logger.warning("Cache write failed for key %s", key)
 
