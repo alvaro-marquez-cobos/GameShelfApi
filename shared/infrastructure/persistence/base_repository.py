@@ -79,6 +79,35 @@ class BaseFirestoreRepository:
             result.append(data)
         return result
 
+    async def get_subcollection_ordered_limited(
+        self,
+        collection: str,
+        doc_id: str,
+        subcollection: str,
+        order_by: str,
+        direction: str = "DESCENDING",
+        limit: int = 10,
+    ) -> list[dict[str, Any]]:
+        """Return up to ``limit`` documents from a subcollection, ordered by a field.
+
+        Uses a native Firestore query so only ``limit`` documents are read,
+        instead of fetching the entire subcollection.
+        """
+        ref = (
+            self._db.collection(collection)
+            .document(doc_id)
+            .collection(subcollection)
+            .order_by(order_by, direction=direction)
+            .limit(limit)
+        )
+        docs = await ref.get()
+        result: list[dict[str, Any]] = []
+        for doc in docs:
+            data = doc.to_dict() or {}
+            data["__doc_id"] = doc.id
+            result.append(data)
+        return result
+
     async def get_subdoc(
         self,
         collection: str,

@@ -30,6 +30,17 @@ class FirestoreLibraryRepository(BaseFirestoreRepository, ILibraryRepository, IG
         docs = await self.get_subcollection(_COLLECTION, uid, _SUBCOLLECTION)
         return [_doc_to_library_game(doc) for doc in docs]
 
+    async def get_most_played(self, uid: str, limit: int) -> list[LibraryGame]:
+        docs = await self.get_subcollection_ordered_limited(
+            _COLLECTION,
+            uid,
+            _SUBCOLLECTION,
+            order_by="playtime_minutes",
+            direction="DESCENDING",
+            limit=limit,
+        )
+        return [_doc_to_library_game(doc) for doc in docs]
+
     async def get_game(self, uid: str, game_id: str) -> LibraryGame | None:
         doc = await self.get_subdoc(_COLLECTION, uid, _SUBCOLLECTION, game_id)
         if doc is None:
