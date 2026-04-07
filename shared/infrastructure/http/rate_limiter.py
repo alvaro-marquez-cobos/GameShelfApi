@@ -9,23 +9,21 @@ Redis instance during the test suite.
 
 Usage in ``main.py``::
 
-    from shared.infrastructure.http.rate_limiter import SafeSlowAPIMiddleware
+    from slowapi.middleware import SlowAPIMiddleware
 
     from shared.infrastructure.http.rate_limiter import limiter, rate_limit_exceeded_handler
 
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
-    app.add_middleware(SafeSlowAPIMiddleware)
+    app.add_middleware(SlowAPIMiddleware)
 """
 
 from fastapi import Request
 from fastapi.responses import JSONResponse
+from redis.exceptions import ConnectionError as RedisConnectionError
 from slowapi import Limiter
 from slowapi.errors import RateLimitExceeded
-from slowapi.middleware import SlowAPIMiddleware
 from slowapi.util import get_remote_address
-from starlette.middleware.base import RequestResponseEndpoint
-from starlette.responses import Response
 
 from shared.config import get_settings
 
@@ -54,7 +52,7 @@ on individual routes when per-endpoint limits are needed::
 """
 
 
-async def rate_limit_exceeded_handler(request: Request, exc: Exception) -> JSONResponse:
+def rate_limit_exceeded_handler(request: Request, exc: Exception) -> JSONResponse:
     """Convert a ``RateLimitExceeded`` error into a structured JSON 429 response.
 
     slowapi raises ``RateLimitExceeded`` (not an ``AppException``) when a
@@ -83,23 +81,18 @@ async def rate_limit_exceeded_handler(request: Request, exc: Exception) -> JSONR
     )
 
 
-async def rate_limiter_connection_error_handler(request: Request, exc: Exception) -> JSONResponse:
+def rate_limiter_connection_error_handler(request: Request, exc: Exception) -> JSONResponse:
     """Convert rate limiter backend failures into a structured JSON 503 response."""
+    detail = str(exc) if exc else None
     return JSONResponse(
         status_code=503,
         content={
             "code": "RATE_LIMITER_UNAVAILABLE",
             "message": "Rate limiter unavailable.",
-            "detail": None,
+            "detail": detail,
         },
     )
 
 
-class SafeSlowAPIMiddleware(SlowAPIMiddleware):
-    """Prevent slowapi connection failures from crashing the whole request."""
-
-    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
-        try:
-            return await super().dispatch(request, call_next)
-        except ConnectionError as exc:
-            return await rate_limiter_connection_error_handler(request, exc)
+# Export the exact Redis exception class used by slowapi storage backends.
+RateLimiterBackendConnectionError = RedisConnectionError
