@@ -9,20 +9,23 @@ Redis instance during the test suite.
 
 Usage in ``main.py``::
 
-    from slowapi.middleware import SlowAPIMiddleware
+    from shared.infrastructure.http.rate_limiter import SafeSlowAPIMiddleware
 
     from shared.infrastructure.http.rate_limiter import limiter, rate_limit_exceeded_handler
 
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
-    app.add_middleware(SlowAPIMiddleware)
+    app.add_middleware(SafeSlowAPIMiddleware)
 """
 
 from fastapi import Request
 from fastapi.responses import JSONResponse
 from slowapi import Limiter
 from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 from slowapi.util import get_remote_address
+from starlette.middleware.base import RequestResponseEndpoint
+from starlette.responses import Response
 
 from shared.config import get_settings
 
@@ -78,3 +81,25 @@ async def rate_limit_exceeded_handler(request: Request, exc: Exception) -> JSONR
             "detail": detail,
         },
     )
+
+
+async def rate_limiter_connection_error_handler(request: Request, exc: Exception) -> JSONResponse:
+    """Convert rate limiter backend failures into a structured JSON 503 response."""
+    return JSONResponse(
+        status_code=503,
+        content={
+            "code": "RATE_LIMITER_UNAVAILABLE",
+            "message": "Rate limiter unavailable.",
+            "detail": None,
+        },
+    )
+
+
+class SafeSlowAPIMiddleware(SlowAPIMiddleware):
+    """Prevent slowapi connection failures from crashing the whole request."""
+
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+        try:
+            return await super().dispatch(request, call_next)
+        except ConnectionError as exc:
+            return await rate_limiter_connection_error_handler(request, exc)
