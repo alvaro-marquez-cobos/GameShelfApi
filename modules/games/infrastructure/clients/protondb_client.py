@@ -33,6 +33,7 @@ class ProtonDbClient(IProtonDbClient):
     @cached(
         ttl=3600,
         key_builder=lambda self, steam_app_id: protondb_key(str(steam_app_id)),
+        deserializer=lambda data: ProtonDbRating(**data) if data is not None else None,
     )
     async def get_compatibility_rating(self, steam_app_id: str) -> ProtonDbRating | None:
         """Fetch the ProtonDB rating for a Steam application (cached 1 hour)."""

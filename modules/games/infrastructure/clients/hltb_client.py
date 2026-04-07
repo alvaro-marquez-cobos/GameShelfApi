@@ -53,6 +53,7 @@ class HltbClient(IHltbClient):
     @cached(
         ttl=3600,
         key_builder=lambda self, game_title: hltb_key(game_title.lower().strip()),
+        deserializer=lambda data: HltbResult(**data) if data is not None else None,
     )
     async def get_game_duration(self, game_title: str) -> HltbResult | None:
         """Fetch completion time data for a game by title (cached 1 hour)."""
