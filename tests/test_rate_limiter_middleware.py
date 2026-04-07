@@ -1,14 +1,22 @@
+from typing import Any
+
+from fastapi import Request
 from httpx import ASGITransport, AsyncClient
+from pytest import MonkeyPatch
+from slowapi.middleware import SlowAPIMiddleware
+from starlette.middleware.base import RequestResponseEndpoint
+from starlette.responses import Response
 
 from main import create_app
-from shared.infrastructure.http import rate_limiter
 
 
-async def test_rate_limiter_connection_error_returns_503(monkeypatch) -> None:
-    async def raise_connection_error(self, request, call_next):
+async def test_rate_limiter_connection_error_returns_503(monkeypatch: MonkeyPatch) -> None:
+    async def raise_connection_error(
+        self: Any, request: Request, call_next: RequestResponseEndpoint
+    ) -> Response:
         raise ConnectionError("redis unavailable")
 
-    monkeypatch.setattr(rate_limiter.SlowAPIMiddleware, "dispatch", raise_connection_error)
+    monkeypatch.setattr(SlowAPIMiddleware, "dispatch", raise_connection_error)
 
     app = create_app()
 

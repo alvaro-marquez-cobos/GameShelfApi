@@ -83,9 +83,7 @@ async def rate_limit_exceeded_handler(request: Request, exc: Exception) -> JSONR
     )
 
 
-async def rate_limiter_connection_error_handler(
-    request: Request, exc: Exception
-) -> JSONResponse:
+async def rate_limiter_connection_error_handler(request: Request, exc: Exception) -> JSONResponse:
     """Convert rate limiter backend failures into a structured JSON 503 response."""
     return JSONResponse(
         status_code=503,
@@ -100,9 +98,7 @@ async def rate_limiter_connection_error_handler(
 class SafeSlowAPIMiddleware(SlowAPIMiddleware):
     """Prevent slowapi connection failures from crashing the whole request."""
 
-    async def dispatch(
-        self, request: Request, call_next: RequestResponseEndpoint
-    ) -> Response:
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         try:
             return await super().dispatch(request, call_next)
         except ConnectionError as exc:
