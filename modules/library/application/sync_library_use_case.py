@@ -38,12 +38,14 @@ class SyncLibraryUseCase(ISyncLibraryUseCase):
         self._psn_client = psn_client
 
     async def execute(self, uid: str, platform: Platform | None = None) -> int:
-        linked = await self._platform_reader.get_linked_platforms(uid)
+        linked_with_tokens = await self._platform_reader.get_linked_with_tokens(uid)
         if platform is not None:
-            linked = [p for p in linked if p.platform == platform]
+            linked_with_tokens = [
+                (lp, t) for lp, t in linked_with_tokens if lp.platform == platform
+            ]
 
         results: list[Any] = await asyncio.gather(
-            *[self._fetch_platform_games(uid, lp) for lp in linked],
+            *[self._fetch_platform_games(lp, tokens) for lp, tokens in linked_with_tokens],
             return_exceptions=True,
         )
 
@@ -57,12 +59,13 @@ class SyncLibraryUseCase(ISyncLibraryUseCase):
 
         return len(all_games)
 
-    async def _fetch_platform_games(self, uid: str, lp: LinkedPlatform) -> list[LibraryGame]:
+    async def _fetch_platform_games(
+        self, lp: LinkedPlatform, tokens: dict[str, Any]
+    ) -> list[LibraryGame]:
         if lp.platform == Platform.STEAM:
             games: Any = await self._steam_client.get_owned_games(lp.username)
             return [_normalize_steam(g) for g in games]
 
-        tokens = await self._platform_reader.get_platform_tokens(uid, lp.platform)
         if not tokens or not tokens.get("access_token"):
             return []
 

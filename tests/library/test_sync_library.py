@@ -83,8 +83,8 @@ async def test_sync_steam_games_upserted(
     platform_reader: AsyncMock,
     steam_client: AsyncMock,
 ) -> None:
-    platform_reader.get_linked_platforms.return_value = [
-        LinkedPlatform(platform=Platform.STEAM, username="76561198000000001")
+    platform_reader.get_linked_with_tokens.return_value = [
+        (LinkedPlatform(platform=Platform.STEAM, username="76561198000000001"), {})
     ]
     steam_client.get_owned_games.return_value = [
         _steam_game(570, "Dota 2", playtime=500),
@@ -107,10 +107,9 @@ async def test_sync_gog_games_upserted(
     platform_reader: AsyncMock,
     gog_client: AsyncMock,
 ) -> None:
-    platform_reader.get_linked_platforms.return_value = [
-        LinkedPlatform(platform=Platform.GOG, username="gog_user")
+    platform_reader.get_linked_with_tokens.return_value = [
+        (LinkedPlatform(platform=Platform.GOG, username="gog_user"), {"access_token": "tok_123"})
     ]
-    platform_reader.get_platform_tokens.return_value = {"access_token": "tok_123"}
     gog_client.get_user_games.return_value = [
         _gog_game("12345", "The Witcher 3"),
     ]
@@ -136,12 +135,11 @@ async def test_one_platform_fails_others_still_synced(
     steam_client: AsyncMock,
     psn_client: AsyncMock,
 ) -> None:
-    platform_reader.get_linked_platforms.return_value = [
-        LinkedPlatform(platform=Platform.STEAM, username="76561198000000001"),
-        LinkedPlatform(platform=Platform.PSN, username="psn_user"),
+    platform_reader.get_linked_with_tokens.return_value = [
+        (LinkedPlatform(platform=Platform.STEAM, username="76561198000000001"), {}),
+        (LinkedPlatform(platform=Platform.PSN, username="psn_user"), {"access_token": "tok"}),
     ]
     steam_client.get_owned_games.return_value = [_steam_game(570, "Dota 2")]
-    platform_reader.get_platform_tokens.return_value = {"access_token": "tok"}
     psn_client.get_played_games.side_effect = Exception("PSN API timeout")
 
     count = await use_case.execute("uid_abc")
@@ -157,10 +155,9 @@ async def test_platform_without_tokens_returns_empty(
     repo: AsyncMock,
     platform_reader: AsyncMock,
 ) -> None:
-    platform_reader.get_linked_platforms.return_value = [
-        LinkedPlatform(platform=Platform.GOG, username="gog_user")
+    platform_reader.get_linked_with_tokens.return_value = [
+        (LinkedPlatform(platform=Platform.GOG, username="gog_user"), {})
     ]
-    platform_reader.get_platform_tokens.return_value = None  # no tokens stored
 
     count = await use_case.execute("uid_abc")
 
@@ -180,9 +177,9 @@ async def test_sync_specific_platform_only(
     platform_reader: AsyncMock,
     steam_client: AsyncMock,
 ) -> None:
-    platform_reader.get_linked_platforms.return_value = [
-        LinkedPlatform(platform=Platform.STEAM, username="76561198000000001"),
-        LinkedPlatform(platform=Platform.GOG, username="gog_user"),
+    platform_reader.get_linked_with_tokens.return_value = [
+        (LinkedPlatform(platform=Platform.STEAM, username="76561198000000001"), {}),
+        (LinkedPlatform(platform=Platform.GOG, username="gog_user"), {}),
     ]
     steam_client.get_owned_games.return_value = [_steam_game(570, "Dota 2")]
 
