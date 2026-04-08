@@ -4,6 +4,7 @@ Stores wishlist items in the ``users/{uid}/wishlist/{game_id}``
 subcollection. Also implements IWishlistReader for cross-module access.
 """
 
+import asyncio
 from datetime import UTC, datetime
 from typing import Any
 
@@ -51,6 +52,14 @@ class FirestoreWishlistRepository(BaseFirestoreRepository, IWishlistRepository, 
     async def get_wishlist_ids(self, uid: str) -> set[str]:
         docs = await self.get_subcollection(_COLLECTION, uid, _SUBCOLLECTION)
         return {doc["game_id"] for doc in docs if "game_id" in doc}
+
+    async def check_wishlist_ids(self, uid: str, game_ids: set[str]) -> set[str]:
+        if not game_ids:
+            return set()
+        docs = await asyncio.gather(
+            *[self.get_subdoc(_COLLECTION, uid, _SUBCOLLECTION, gid) for gid in game_ids]
+        )
+        return {gid for gid, doc in zip(game_ids, docs, strict=True) if doc is not None}
 
 
 def _doc_to_wishlist_item(doc: dict[str, Any]) -> WishlistItem:

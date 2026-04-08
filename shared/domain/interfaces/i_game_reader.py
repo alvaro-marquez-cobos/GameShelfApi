@@ -14,3 +14,12 @@ class IGameReader(ABC):
     async def get_owned_game_ids(self, uid: str) -> set[str]:
         """Return the set of game IDs owned by the user."""
         ...
+
+    @abstractmethod
+    async def check_owned_game_ids(self, uid: str, game_ids: set[str]) -> set[str]:
+        """Return the subset of ``game_ids`` that the user actually owns.
+
+        Fetches only the specific documents instead of the entire library
+        subcollection, so the cost is O(len(game_ids)) reads.
+        """
+        ...

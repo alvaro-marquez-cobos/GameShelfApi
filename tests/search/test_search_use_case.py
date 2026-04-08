@@ -58,8 +58,8 @@ async def test_search_marks_owned_and_wishlisted(
         _itad_result("itad-hollow", "Hollow Knight", steam_app_id=367520),
         _itad_result("itad-nosteam", "DRM-free Game", steam_app_id=None),
     ]
-    game_reader.get_owned_game_ids.return_value = {"steam_1145360", "steam_99999"}
-    wishlist_reader.get_wishlist_ids.return_value = {"itad-celeste"}
+    game_reader.check_owned_game_ids.return_value = {"steam_1145360"}
+    wishlist_reader.check_wishlist_ids.return_value = {"itad-celeste"}
 
     results = await use_case.execute("uid_abc", "Hades")
 
@@ -121,8 +121,8 @@ async def test_owned_and_wishlist_fetch_failure_defaults_to_false(
     itad_client.search_games.return_value = [
         _itad_result("itad-hades", "Hades", steam_app_id=1145360)
     ]
-    game_reader.get_owned_game_ids.side_effect = Exception("Firestore down")
-    wishlist_reader.get_wishlist_ids.side_effect = Exception("Firestore down")
+    game_reader.check_owned_game_ids.side_effect = Exception("Firestore down")
+    wishlist_reader.check_wishlist_ids.side_effect = Exception("Firestore down")
 
     results = await use_case.execute("uid_abc", "Hades")
 

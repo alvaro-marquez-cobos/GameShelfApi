@@ -38,9 +38,14 @@ class SearchGamesUseCase(ISearchGamesUseCase):
 
         itad_results = itad_results[:5]
 
+        steam_game_ids = {
+            f"steam_{item.steam_app_id}" for item in itad_results if item.steam_app_id
+        }
+        itad_ids = {item.id for item in itad_results}
+
         owned_ids, wishlist_ids = await asyncio.gather(
-            self._game_reader.get_owned_game_ids(uid),
-            self._wishlist_reader.get_wishlist_ids(uid),
+            self._game_reader.check_owned_game_ids(uid, steam_game_ids),
+            self._wishlist_reader.check_wishlist_ids(uid, itad_ids),
             return_exceptions=True,
         )
 
