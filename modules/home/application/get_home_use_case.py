@@ -34,11 +34,17 @@ def _steam_game_to_library_game(game: Any) -> LibraryGame:
 
 def _steam_game_to_popular(game: SteamChartsGame) -> PopularGame:
     """Convert a SteamChartsGame to a PopularGame."""
+    cover_url = (
+        f"https://shared.akamai.steamstatic.com/store_item_assets"
+        f"/steam/apps/{game.app_id}/header.jpg"
+        if game.app_id
+        else None
+    )
     return PopularGame(
         steam_app_id=game.app_id,
         title=game.name,
         current_players=game.current_players,
-        cover_url=None,
+        cover_url=cover_url,
     )
 
 
