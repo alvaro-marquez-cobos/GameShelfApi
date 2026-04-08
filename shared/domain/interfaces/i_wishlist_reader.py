@@ -19,3 +19,12 @@ class IWishlistReader(ABC):
     async def get_wishlist_ids(self, uid: str) -> set[str]:
         """Return the set of game IDs on the user's wishlist."""
         ...
+
+    @abstractmethod
+    async def check_wishlist_ids(self, uid: str, game_ids: set[str]) -> set[str]:
+        """Return the subset of ``game_ids`` present in the user's wishlist.
+
+        Fetches only the specific documents instead of the entire wishlist
+        subcollection, so the cost is O(len(game_ids)) reads.
+        """
+        ...
