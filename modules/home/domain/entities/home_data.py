@@ -36,4 +36,4 @@ class HomeData:
 
     recently_played: list[LibraryGame] | None = None
     most_played: list[LibraryGame] = field(default_factory=list)
-    popular_now: list[PopularGame] | None = None
+    popular_now: list[PopularGame] = field(default_factory=list)

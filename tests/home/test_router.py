@@ -46,7 +46,7 @@ def _home_data(
     return SimpleNamespace(
         recently_played=recently_played,
         most_played=most_played or [],
-        popular_now=popular_now,
+        popular_now=popular_now or [],
     )
 
 
@@ -97,7 +97,7 @@ async def test_get_home_optional_sections_null_when_missing(
     assert response.status_code == 200
     data = response.json()
     assert data["recentlyPlayed"] is None
-    assert data["popularNow"] is None
+    assert data["popularNow"] == []
     assert len(data["mostPlayed"]) == 1
 
 

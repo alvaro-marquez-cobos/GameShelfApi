@@ -23,7 +23,7 @@ class HomeResponse(BaseModel):
 
     recently_played: list[LibraryGameResponse] | None = Field(default=None, alias="recentlyPlayed")
     most_played: list[LibraryGameResponse] = Field(alias="mostPlayed")
-    popular_now: list[PopularGameResponse] | None = Field(default=None, alias="popularNow")
+    popular_now: list[PopularGameResponse] = Field(default_factory=list, alias="popularNow")
 
 
 class PopularOnlyResponse(BaseModel):

@@ -41,17 +41,15 @@ async def get_home(
     if data.recently_played is not None:
         recently = [_to_library_game(game) for game in data.recently_played]
 
-    popular = None
-    if data.popular_now is not None:
-        popular = [
-            PopularGameResponse(
-                steam_app_id=game.steam_app_id,
-                title=game.title,
-                current_players=game.current_players,
-                cover_url=game.cover_url,
-            )
-            for game in data.popular_now
-        ]
+    popular = [
+        PopularGameResponse(
+            steam_app_id=game.steam_app_id,
+            title=game.title,
+            current_players=game.current_players,
+            cover_url=game.cover_url,
+        )
+        for game in data.popular_now
+    ]
 
     return HomeResponse(
         recently_played=recently,

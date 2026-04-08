@@ -158,7 +158,7 @@ async def test_recently_played_failure_returns_none(
 
 
 @pytest.mark.asyncio
-async def test_popular_now_failure_returns_none(
+async def test_popular_now_failure_returns_empty_list(
     use_case: GetHomeUseCase,
     steam_client: AsyncMock,
     library_repo: AsyncMock,
@@ -170,5 +170,5 @@ async def test_popular_now_failure_returns_none(
 
     result = await use_case.execute("uid_abc")
 
-    assert result.popular_now is None
+    assert result.popular_now == []
     assert len(result.most_played) == 1
