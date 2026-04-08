@@ -57,19 +57,26 @@ class GetGameDlcsUseCase(IGetGameDlcsUseCase):
             return_exceptions=True,
         )
 
-        owned_ids = await self._game_reader.get_owned_game_ids(uid)
-
-        dlcs: list[DlcDetail] = []
+        # Build the list of valid DLC metadata first, then check ownership
+        # only for those IDs — avoids reading the entire library subcollection.
+        valid_dlcs: list[tuple[int, SteamAppDetails]] = []
         for dlc_app_id, result in zip(app_details.dlc_app_ids, results, strict=False):
             if isinstance(result, BaseException) or result is None:
                 logger.warning("Failed to fetch DLC details for app_id %s", dlc_app_id)
                 continue
+            valid_dlcs.append((dlc_app_id, result))
+
+        dlc_game_ids = {f"steam_{app_id}" for app_id, _ in valid_dlcs}
+        owned_ids = await self._game_reader.check_owned_game_ids(uid, dlc_game_ids)
+
+        dlcs: list[DlcDetail] = []
+        for dlc_app_id, details in valid_dlcs:
             dlc_game_id = f"steam_{dlc_app_id}"
             dlcs.append(
                 DlcDetail(
                     app_id=dlc_app_id,
-                    name=result.name,
-                    header_image=result.header_image,
+                    name=details.name,
+                    header_image=details.header_image,
                     is_owned=dlc_game_id in owned_ids,
                 )
             )
