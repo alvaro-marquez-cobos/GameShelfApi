@@ -23,3 +23,14 @@ class IPlatformReader(ABC):
     async def get_platform_tokens(self, uid: str, platform: Platform) -> dict[str, Any] | None:
         """Return stored OAuth tokens for a platform, or None if not linked."""
         ...
+
+    @abstractmethod
+    async def get_linked_with_tokens(self, uid: str) -> list[tuple[LinkedPlatform, dict[str, Any]]]:
+        """Return all linked platforms together with their stored tokens.
+
+        Reads the platforms subcollection once and extracts both the platform
+        metadata and the OAuth tokens from the same documents, avoiding the
+        extra per-platform reads that result from calling get_platform_tokens()
+        separately for each linked platform.
+        """
+        ...

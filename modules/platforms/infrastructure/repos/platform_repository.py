@@ -18,6 +18,15 @@ from shared.infrastructure.persistence.base_repository import BaseFirestoreRepos
 
 _COLLECTION = "users"
 _SUBCOLLECTION = "platforms"
+_TOKEN_KEYS = {
+    "access_token",
+    "refresh_token",
+    "steam_id",
+    "account_id",
+    "user_id",
+    "token_expires_at",
+    "expires_at",
+}
 
 
 class FirestorePlatformRepository(BaseFirestoreRepository, IPlatformRepository, IPlatformReader):
@@ -50,16 +59,7 @@ class FirestorePlatformRepository(BaseFirestoreRepository, IPlatformRepository, 
         doc = await self.get_subdoc(_COLLECTION, uid, _SUBCOLLECTION, platform)
         if doc is None:
             return None
-        allowed_keys = {
-            "access_token",
-            "refresh_token",
-            "steam_id",
-            "account_id",
-            "user_id",
-            "token_expires_at",
-            "expires_at",
-        }
-        return {k: v for k, v in doc.items() if k in allowed_keys}
+        return {k: v for k, v in doc.items() if k in _TOKEN_KEYS}
 
     async def store_tokens(self, uid: str, platform: Platform, tokens: dict[str, Any]) -> None:
         await self.update_subdoc(_COLLECTION, uid, _SUBCOLLECTION, platform, tokens)
@@ -70,6 +70,13 @@ class FirestorePlatformRepository(BaseFirestoreRepository, IPlatformRepository, 
 
     async def get_platform_tokens(self, uid: str, platform: Platform) -> dict[str, Any] | None:
         return await self.get_tokens(uid, platform)
+
+    async def get_linked_with_tokens(self, uid: str) -> list[tuple[LinkedPlatform, dict[str, Any]]]:
+        docs = await self.get_subcollection(_COLLECTION, uid, _SUBCOLLECTION)
+        return [
+            (_doc_to_linked_platform(doc), {k: v for k, v in doc.items() if k in _TOKEN_KEYS})
+            for doc in docs
+        ]
 
 
 def _doc_to_linked_platform(doc: dict[str, Any]) -> LinkedPlatform:
