@@ -56,7 +56,7 @@ async def test_returns_dlcs_with_ownership_flags(
         _dlc_details(200, "DLC B"),
         _dlc_details(300, "DLC C"),
     ]
-    game_reader.get_owned_game_ids.return_value = {"steam_570", "steam_100"}
+    game_reader.check_owned_game_ids.return_value = {"steam_100"}
 
     result = await use_case.execute("uid_abc", "steam_570")
 
@@ -83,7 +83,7 @@ async def test_one_dlc_fetch_fails_others_returned(
         Exception("Steam API error"),
         _dlc_details(200, "DLC B"),
     ]
-    game_reader.get_owned_game_ids.return_value = set()
+    game_reader.check_owned_game_ids.return_value = set()
 
     result = await use_case.execute("uid_abc", "steam_570")
 
@@ -120,7 +120,7 @@ async def test_steam_app_id_extracted_from_game_id_prefix(
     repo.get_game.return_value = None  # not in cache
     base_game = SteamAppDetails(app_id=570, name="Dota 2", dlc_app_ids=[100])
     steam_metadata.get_app_details.side_effect = [base_game, _dlc_details(100, "DLC A")]
-    game_reader.get_owned_game_ids.return_value = set()
+    game_reader.check_owned_game_ids.return_value = set()
 
     result = await use_case.execute("uid_abc", "steam_570")
 
