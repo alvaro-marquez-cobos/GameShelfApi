@@ -178,12 +178,19 @@ class SteamAuthClient(ISteamAuthClient):
     @staticmethod
     def _parse_game(raw: dict) -> SteamGame:  # type: ignore[type-arg]
         """Parse a raw Steam game JSON object into a ``SteamGame``."""
+        app_id = raw.get("appid", 0)
+        header_image = raw.get("header_image", "")
+        if not header_image and app_id:
+            header_image = (
+                f"https://shared.akamai.steamstatic.com/store_item_assets"
+                f"/steam/apps/{app_id}/header.jpg"
+            )
         return SteamGame(
-            app_id=raw.get("appid", 0),
+            app_id=app_id,
             name=raw.get("name", ""),
             playtime_forever=raw.get("playtime_forever", 0),
             playtime_2weeks=raw.get("playtime_2weeks", 0),
             img_icon_url=raw.get("img_icon_url", ""),
-            header_image=raw.get("header_image", ""),
+            header_image=header_image,
             last_played=raw.get("rtime_last_played", 0),
         )
