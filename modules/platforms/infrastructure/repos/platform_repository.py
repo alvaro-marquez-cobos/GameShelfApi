@@ -30,6 +30,10 @@ class FirestorePlatformRepository(BaseFirestoreRepository, IPlatformRepository, 
         docs = await self.get_subcollection(_COLLECTION, uid, _SUBCOLLECTION)
         return [_doc_to_linked_platform(doc) for doc in docs]
 
+    async def is_linked(self, uid: str, platform: Platform) -> bool:
+        doc = await self.get_subdoc(_COLLECTION, uid, _SUBCOLLECTION, platform)
+        return doc is not None
+
     async def link(self, uid: str, platform_data: LinkedPlatform) -> None:
         data: dict[str, Any] = {
             "platform": platform_data.platform,

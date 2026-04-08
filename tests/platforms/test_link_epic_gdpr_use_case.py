@@ -6,7 +6,6 @@ import pytest
 
 from modules.platforms.application.link_epic_gdpr_use_case import LinkEpicGdprUseCase
 from modules.platforms.domain.exceptions import PlatformAlreadyLinkedException
-from shared.domain.entities.linked_platform import LinkedPlatform
 from shared.domain.enums.platform import Platform
 from shared.exceptions import BadRequestException
 
@@ -50,7 +49,7 @@ async def test_links_epic_with_gdpr_import(
     platform_repo: AsyncMock,
     library_repo: AsyncMock,
 ) -> None:
-    platform_repo.get_linked.return_value = []
+    platform_repo.is_linked.return_value = False
     epic_client.parse_gdpr_export = MagicMock(return_value=[_epic_game("fn", "Fortnite", "cat_1")])
 
     result = await use_case.execute("uid_1", "{}")
@@ -66,7 +65,7 @@ async def test_raises_when_epic_already_linked(
     use_case: LinkEpicGdprUseCase,
     platform_repo: AsyncMock,
 ) -> None:
-    platform_repo.get_linked.return_value = [LinkedPlatform(platform=Platform.EPIC, username="u")]
+    platform_repo.is_linked.return_value = True
 
     with pytest.raises(PlatformAlreadyLinkedException):
         await use_case.execute("uid_1", "{}")
@@ -78,7 +77,7 @@ async def test_raises_when_no_games_in_export(
     epic_client: AsyncMock,
     platform_repo: AsyncMock,
 ) -> None:
-    platform_repo.get_linked.return_value = []
+    platform_repo.is_linked.return_value = False
     epic_client.parse_gdpr_export = MagicMock(return_value=[])
 
     with pytest.raises(BadRequestException):

@@ -6,7 +6,6 @@ import pytest
 
 from modules.platforms.application.link_epic_use_case import LinkEpicUseCase
 from modules.platforms.domain.exceptions import PlatformAlreadyLinkedException
-from shared.domain.entities.linked_platform import LinkedPlatform
 from shared.domain.enums.platform import Platform
 
 
@@ -40,7 +39,7 @@ async def test_links_epic_successfully(
     use_case: LinkEpicUseCase, epic_client: AsyncMock, repo: AsyncMock
 ) -> None:
     epic_client.exchange_auth_code.return_value = _make_token("EpicUser")
-    repo.get_linked.return_value = []
+    repo.is_linked.return_value = False
 
     result = await use_case.execute("uid_1", "auth_code_abc")
 
@@ -57,7 +56,7 @@ async def test_raises_conflict_when_already_linked(
     use_case: LinkEpicUseCase, epic_client: AsyncMock, repo: AsyncMock
 ) -> None:
     epic_client.exchange_auth_code.return_value = _make_token()
-    repo.get_linked.return_value = [LinkedPlatform(platform=Platform.EPIC, username="existing")]
+    repo.is_linked.return_value = True
 
     with pytest.raises(PlatformAlreadyLinkedException):
         await use_case.execute("uid_1", "auth_code_abc")
@@ -70,7 +69,7 @@ async def test_falls_back_to_account_id_when_no_display_name(
     use_case: LinkEpicUseCase, epic_client: AsyncMock, repo: AsyncMock
 ) -> None:
     epic_client.exchange_auth_code.return_value = _make_token(display_name="")
-    repo.get_linked.return_value = []
+    repo.is_linked.return_value = False
 
     result = await use_case.execute("uid_1", "auth_code_abc")
 

@@ -6,7 +6,6 @@ import pytest
 
 from modules.platforms.application.link_gog_use_case import LinkGogUseCase
 from modules.platforms.domain.exceptions import PlatformAlreadyLinkedException
-from shared.domain.entities.linked_platform import LinkedPlatform
 from shared.domain.enums.platform import Platform
 
 
@@ -39,7 +38,7 @@ async def test_links_gog_successfully(
     use_case: LinkGogUseCase, gog_client: AsyncMock, repo: AsyncMock
 ) -> None:
     gog_client.exchange_code.return_value = _make_token()
-    repo.get_linked.return_value = []
+    repo.is_linked.return_value = False
 
     result = await use_case.execute("uid_1", "auth_code_abc")
 
@@ -56,7 +55,7 @@ async def test_raises_conflict_when_already_linked(
     use_case: LinkGogUseCase, gog_client: AsyncMock, repo: AsyncMock
 ) -> None:
     gog_client.exchange_code.return_value = _make_token()
-    repo.get_linked.return_value = [LinkedPlatform(platform=Platform.GOG, username="existing")]
+    repo.is_linked.return_value = True
 
     with pytest.raises(PlatformAlreadyLinkedException):
         await use_case.execute("uid_1", "auth_code_abc")

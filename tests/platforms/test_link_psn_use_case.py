@@ -6,7 +6,6 @@ import pytest
 
 from modules.platforms.application.link_psn_use_case import LinkPsnUseCase
 from modules.platforms.domain.exceptions import PlatformAlreadyLinkedException
-from shared.domain.entities.linked_platform import LinkedPlatform
 from shared.domain.enums.platform import Platform
 
 
@@ -39,7 +38,7 @@ async def test_links_psn_successfully(
     use_case: LinkPsnUseCase, psn_client: AsyncMock, repo: AsyncMock
 ) -> None:
     psn_client.exchange_npsso.return_value = _make_token()
-    repo.get_linked.return_value = []
+    repo.is_linked.return_value = False
 
     result = await use_case.execute("uid_1", "npsso_token_abc")
 
@@ -56,7 +55,7 @@ async def test_raises_conflict_when_already_linked(
     use_case: LinkPsnUseCase, psn_client: AsyncMock, repo: AsyncMock
 ) -> None:
     psn_client.exchange_npsso.return_value = _make_token()
-    repo.get_linked.return_value = [LinkedPlatform(platform=Platform.PSN, username="existing")]
+    repo.is_linked.return_value = True
 
     with pytest.raises(PlatformAlreadyLinkedException):
         await use_case.execute("uid_1", "npsso_token_abc")

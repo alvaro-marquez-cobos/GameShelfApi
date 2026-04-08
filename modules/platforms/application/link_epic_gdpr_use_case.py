@@ -31,8 +31,7 @@ class LinkEpicGdprUseCase(ILinkEpicGdprUseCase):
         self._library_repo = library_repo
 
     async def execute(self, uid: str, json_content: str) -> LinkedPlatform:
-        existing = await self._platform_repo.get_linked(uid)
-        if any(lp.platform == Platform.EPIC for lp in existing):
+        if await self._platform_repo.is_linked(uid, Platform.EPIC):
             raise PlatformAlreadyLinkedException("epic")
 
         games = self._epic.parse_gdpr_export(json_content)
