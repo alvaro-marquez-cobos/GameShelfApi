@@ -16,6 +16,15 @@ class IPlatformRepository(ABC):
         ...
 
     @abstractmethod
+    async def is_linked(self, uid: str, platform: Platform) -> bool:
+        """Return True if the given platform is already linked for the user.
+
+        Fetches only the single platform document instead of the entire
+        platforms subcollection, so the cost is exactly 1 read.
+        """
+        ...
+
+    @abstractmethod
     async def link(self, uid: str, platform_data: LinkedPlatform) -> None:
         """Persist a new platform link for the user."""
         ...

@@ -6,7 +6,6 @@ import pytest
 
 from modules.platforms.application.link_steam_use_case import LinkSteamUseCase
 from modules.platforms.domain.exceptions import PlatformAlreadyLinkedException
-from shared.domain.entities.linked_platform import LinkedPlatform
 from shared.domain.enums.platform import Platform
 from shared.exceptions import BadRequestException
 
@@ -34,7 +33,7 @@ async def test_links_steam_successfully(
     use_case: LinkSteamUseCase, steam_client: AsyncMock, repo: AsyncMock
 ) -> None:
     steam_client.verify_openid.return_value = "76561198000000001"
-    repo.get_linked.return_value = []
+    repo.is_linked.return_value = False
     player = MagicMock()
     player.persona_name = "GabeN"
     player.avatar_url = "https://img/avatar.jpg"
@@ -66,7 +65,7 @@ async def test_raises_conflict_when_already_linked(
     use_case: LinkSteamUseCase, steam_client: AsyncMock, repo: AsyncMock
 ) -> None:
     steam_client.verify_openid.return_value = "76561198000000001"
-    repo.get_linked.return_value = [LinkedPlatform(platform=Platform.STEAM, username="existing")]
+    repo.is_linked.return_value = True
 
     with pytest.raises(PlatformAlreadyLinkedException):
         await use_case.execute("uid_1", _PARAMS)
@@ -79,7 +78,7 @@ async def test_uses_steam_id_as_username_when_player_not_found(
     use_case: LinkSteamUseCase, steam_client: AsyncMock, repo: AsyncMock
 ) -> None:
     steam_client.verify_openid.return_value = "76561198000000001"
-    repo.get_linked.return_value = []
+    repo.is_linked.return_value = False
     steam_client.get_player_summary.return_value = None
 
     result = await use_case.execute("uid_1", _PARAMS)

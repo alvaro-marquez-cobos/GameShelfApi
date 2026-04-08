@@ -22,8 +22,7 @@ class LinkEpicUseCase(ILinkEpicUseCase):
     async def execute(self, uid: str, code: str) -> LinkedPlatform:
         token = await self._epic.exchange_auth_code(code)
 
-        existing = await self._repo.get_linked(uid)
-        if any(lp.platform == Platform.EPIC for lp in existing):
+        if await self._repo.is_linked(uid, Platform.EPIC):
             raise PlatformAlreadyLinkedException("epic")
 
         linked = LinkedPlatform(

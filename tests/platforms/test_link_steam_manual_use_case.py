@@ -6,7 +6,6 @@ import pytest
 
 from modules.platforms.application.link_steam_manual_use_case import LinkSteamManualUseCase
 from modules.platforms.domain.exceptions import PlatformAlreadyLinkedException
-from shared.domain.entities.linked_platform import LinkedPlatform
 from shared.domain.enums.platform import Platform
 from shared.exceptions import BadRequestException
 
@@ -32,7 +31,7 @@ async def test_links_steam_with_steam_id(
     steam_client: AsyncMock,
     repo: AsyncMock,
 ) -> None:
-    repo.get_linked.return_value = []
+    repo.is_linked.return_value = False
     steam_client.get_player_summary.return_value = None
 
     result = await use_case.execute("uid_1", "76561198000000001")
@@ -48,7 +47,7 @@ async def test_links_steam_with_steam_id(
 async def test_links_steam_with_vanity_url(
     use_case: LinkSteamManualUseCase, steam_client: AsyncMock, repo: AsyncMock
 ) -> None:
-    repo.get_linked.return_value = []
+    repo.is_linked.return_value = False
     steam_client.resolve_vanity_url.return_value = "76561198000000009"
     steam_client.get_player_summary.return_value = None
 
@@ -61,7 +60,7 @@ async def test_links_steam_with_vanity_url(
 async def test_raises_when_steam_already_linked(
     use_case: LinkSteamManualUseCase, repo: AsyncMock
 ) -> None:
-    repo.get_linked.return_value = [LinkedPlatform(platform=Platform.STEAM, username="existing")]
+    repo.is_linked.return_value = True
 
     with pytest.raises(PlatformAlreadyLinkedException):
         await use_case.execute("uid_1", "76561198000000001")
@@ -71,7 +70,7 @@ async def test_raises_when_steam_already_linked(
 async def test_raises_on_unresolvable_profile(
     use_case: LinkSteamManualUseCase, steam_client: AsyncMock, repo: AsyncMock
 ) -> None:
-    repo.get_linked.return_value = []
+    repo.is_linked.return_value = False
     steam_client.resolve_vanity_url.return_value = None
 
     with pytest.raises(BadRequestException):

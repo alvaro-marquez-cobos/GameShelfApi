@@ -25,8 +25,7 @@ class LinkSteamUseCase(ILinkSteamUseCase):
         if steam_id is None:
             raise BadRequestException("Steam OpenID verification failed")
 
-        existing = await self._repo.get_linked(uid)
-        if any(lp.platform == Platform.STEAM for lp in existing):
+        if await self._repo.is_linked(uid, Platform.STEAM):
             raise PlatformAlreadyLinkedException("steam")
 
         player = await self._steam.get_player_summary(steam_id)

@@ -22,8 +22,7 @@ class LinkPsnUseCase(ILinkPsnUseCase):
     async def execute(self, uid: str, npsso: str) -> LinkedPlatform:
         token = await self._psn.exchange_npsso(npsso)
 
-        existing = await self._repo.get_linked(uid)
-        if any(lp.platform == Platform.PSN for lp in existing):
+        if await self._repo.is_linked(uid, Platform.PSN):
             raise PlatformAlreadyLinkedException("psn")
 
         linked = LinkedPlatform(

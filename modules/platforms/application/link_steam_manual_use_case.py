@@ -27,8 +27,7 @@ class LinkSteamManualUseCase(ILinkSteamManualUseCase):
         self._repo = repo
 
     async def execute(self, uid: str, profile_url_or_id: str) -> LinkedPlatform:
-        existing = await self._repo.get_linked(uid)
-        if any(lp.platform == Platform.STEAM for lp in existing):
+        if await self._repo.is_linked(uid, Platform.STEAM):
             raise PlatformAlreadyLinkedException("steam")
 
         steam_id = await self._resolve_steam_id(profile_url_or_id)
