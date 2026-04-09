@@ -6,6 +6,7 @@ concurrent calls to ``steam_max_concurrent`` (default: 3) across both this
 client and ``SteamMetadataClient``.
 """
 
+import asyncio
 import logging
 import re
 from urllib.parse import urlencode
@@ -13,6 +14,8 @@ from urllib.parse import urlencode
 from modules.platforms.domain.entities.steam import SteamChartsGame, SteamGame, SteamPlayer
 from shared.config import get_settings
 from shared.domain.interfaces.steam_auth_client import ISteamAuthClient
+from shared.infrastructure.cache.decorators import cached
+from shared.infrastructure.cache.keys import popular_games_key
 from shared.infrastructure.http.base_client import BaseHttpClient
 from shared.infrastructure.http.steam_semaphore import steam_semaphore
 
@@ -34,6 +37,7 @@ class SteamAuthClient(ISteamAuthClient):
         settings = get_settings()
         self._api_key = api_key or settings.steam_api_key
         self._http = BaseHttpClient(base_url=_STEAM_API_BASE)
+        self._store_http = BaseHttpClient(base_url="https://store.steampowered.com")
 
     async def get_owned_games(self, steam_id: str) -> list[SteamGame]:
         """Return the full list of owned games for a Steam user."""
@@ -75,8 +79,13 @@ class SteamAuthClient(ISteamAuthClient):
         data = response.json().get("response", {})
         return [self._parse_game(g) for g in data.get("games", [])]
 
+    @cached(
+        ttl=900,
+        key_builder=lambda self, limit=100: popular_games_key(limit),
+        deserializer=lambda data: [SteamChartsGame(**item) for item in data],
+    )
     async def get_most_played_global(self, limit: int = 100) -> list[SteamChartsGame]:
-        """Return the global most-played games chart."""
+        """Return the global most-played games chart with resolved names."""
         async with steam_semaphore:
             response = await self._http.get(
                 "/ISteamChartsService/GetMostPlayedGames/v1/",
@@ -87,7 +96,7 @@ class SteamAuthClient(ISteamAuthClient):
             return []
 
         ranks = response.json().get("response", {}).get("ranks", [])
-        return [
+        games = [
             SteamChartsGame(
                 app_id=entry["appid"],
                 current_players=entry.get("current_players", 0),
@@ -95,6 +104,33 @@ class SteamAuthClient(ISteamAuthClient):
             for entry in ranks[:limit]
             if "appid" in entry
         ]
+
+        names = await self._resolve_app_names([g.app_id for g in games])
+        for game in games:
+            game.name = names.get(game.app_id, "")
+
+        return games
+
+    async def _resolve_app_names(self, app_ids: list[int]) -> dict[int, str]:
+        """Resolve Steam app IDs to game names via the Store API."""
+
+        async def _fetch_name(app_id: int) -> tuple[int, str]:
+            try:
+                async with steam_semaphore:
+                    resp = await self._store_http.get(
+                        "/api/appdetails",
+                        params={"appids": app_id, "filters": "basic"},
+                    )
+                if resp.status_code == 200:
+                    data = resp.json().get(str(app_id), {})
+                    if data.get("success"):
+                        return app_id, data["data"].get("name", "")
+            except Exception:
+                logger.debug("Failed to resolve name for app_id=%s", app_id)
+            return app_id, ""
+
+        results = await asyncio.gather(*[_fetch_name(aid) for aid in app_ids])
+        return dict(results)
 
     async def get_player_summary(self, steam_id: str) -> SteamPlayer | None:
         """Return profile information for a Steam user."""

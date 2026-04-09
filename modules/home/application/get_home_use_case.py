@@ -102,10 +102,10 @@ class GetHomeUseCase(IGetHomeUseCase):
 
         # Popular now (global)
         popular_raw = results[2]
-        popular_now: list[PopularGame] | None
+        popular_now: list[PopularGame]
         if isinstance(popular_raw, BaseException):
             logger.warning("Failed to fetch global popular games: %s", popular_raw)
-            popular_now = None
+            popular_now = []
         else:
             popular_now = [_steam_game_to_popular(g) for g in popular_raw]
 
