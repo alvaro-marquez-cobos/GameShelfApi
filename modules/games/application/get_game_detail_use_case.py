@@ -10,6 +10,7 @@ from modules.games.domain.entities.itad import Deal
 from modules.games.domain.interfaces.repositories.i_game_repository import IGameRepository
 from modules.games.domain.interfaces.use_cases.get_game_detail import IGetGameDetailUseCase
 from shared.domain.interfaces.hltb_client import IHltbClient
+from shared.domain.interfaces.i_library_reader import ILibraryReader
 from shared.domain.interfaces.i_wishlist_reader import IWishlistReader
 from shared.domain.interfaces.itad_client import IItadClient
 from shared.domain.interfaces.protondb_client import IProtonDbClient
@@ -26,7 +27,9 @@ def _ok(result: Any, default: Any) -> Any:
 class GetGameDetailUseCase(IGetGameDetailUseCase):
     """Fetch and assemble enriched game detail from multiple services.
 
-    Phase 1 — Resolve Steam app ID (if not already stored).
+    Phase 1 — Resolve title and Steam app ID (library entry first, then
+               the games metadata cache, then deterministic game_id parsing,
+               then Steam store search by title).
     Phase 2 — Parallel enrichment: Steam metadata, ProtonDB, HLTB, ITAD deals,
                wishlist flag.
     Phase 3 — Assemble and return GameDetail with graceful null for failures.
@@ -40,6 +43,7 @@ class GetGameDetailUseCase(IGetGameDetailUseCase):
         hltb: IHltbClient,
         itad: IItadClient,
         wishlist_reader: IWishlistReader,
+        library_reader: ILibraryReader,
     ) -> None:
         self._repo = repo
         self._steam_metadata = steam_metadata
@@ -47,13 +51,21 @@ class GetGameDetailUseCase(IGetGameDetailUseCase):
         self._hltb = hltb
         self._itad = itad
         self._wishlist_reader = wishlist_reader
+        self._library_reader = library_reader
 
-    async def execute(self, uid: str, game_id: str, title: str) -> GameDetail:
+    async def execute(self, uid: str, game_id: str) -> GameDetail:
         # ------------------------------------------------------------------
-        # Phase 1 — Resolve Steam app ID
+        # Phase 1 — Resolve title and Steam app ID from user's library first,
+        # then fall back to the shared games metadata collection.
         # ------------------------------------------------------------------
-        game_doc = await self._repo.get_game(game_id)
-        steam_app_id: int | None = game_doc.get("steam_app_id") if game_doc else None
+        library_game = await self._library_reader.get_game(uid, game_id)
+        title = library_game.title if library_game and library_game.title else game_id
+        steam_app_id: int | None = library_game.steam_app_id if library_game else None
+
+        if steam_app_id is None:
+            game_doc = await self._repo.get_game(game_id)
+            if game_doc:
+                steam_app_id = game_doc.get("steam_app_id")
 
         if steam_app_id is None and game_id.startswith("steam_"):
             # Try to extract from deterministic game_id (e.g. "steam_570")
