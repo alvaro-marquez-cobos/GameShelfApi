@@ -1,7 +1,6 @@
 """Use case: sync the user's game library from external platforms."""
 
 import asyncio
-from datetime import UTC, datetime
 from typing import Any
 
 from modules.library.domain.entities.library_game import LibraryGame
@@ -14,8 +13,8 @@ from shared.domain.enums.platform import Platform
 from shared.domain.interfaces.epic_auth_client import IEpicAuthClient
 from shared.domain.interfaces.gog_auth_client import IGogAuthClient
 from shared.domain.interfaces.i_platform_reader import IPlatformReader
+from shared.domain.interfaces.i_steam_library_source import ISteamLibrarySource
 from shared.domain.interfaces.psn_auth_client import IPsnAuthClient
-from shared.domain.interfaces.steam_auth_client import ISteamAuthClient
 
 
 class SyncLibraryUseCase(ISyncLibraryUseCase):
@@ -25,14 +24,14 @@ class SyncLibraryUseCase(ISyncLibraryUseCase):
         self,
         repo: ILibraryRepository,
         platform_reader: IPlatformReader,
-        steam_client: ISteamAuthClient,
+        steam_library_source: ISteamLibrarySource,
         epic_client: IEpicAuthClient,
         gog_client: IGogAuthClient,
         psn_client: IPsnAuthClient,
     ) -> None:
         self._repo = repo
         self._platform_reader = platform_reader
-        self._steam_client = steam_client
+        self._steam_library = steam_library_source
         self._epic_client = epic_client
         self._gog_client = gog_client
         self._psn_client = psn_client
@@ -63,41 +62,27 @@ class SyncLibraryUseCase(ISyncLibraryUseCase):
         self, lp: LinkedPlatform, tokens: dict[str, Any]
     ) -> list[LibraryGame]:
         if lp.platform == Platform.STEAM:
-            games: Any = await self._steam_client.get_owned_games(lp.username)
-            return [_normalize_steam(g) for g in games]
+            return await self._steam_library.get_owned_games(lp.username)
 
         if not tokens or not tokens.get("access_token"):
             return []
 
         if lp.platform == Platform.EPIC:
             account_id = tokens.get("account_id", "")
-            games = await self._epic_client.fetch_library(tokens["access_token"], account_id)
-            return [_normalize_epic(g) for g in games]
+            epic_games: Any = await self._epic_client.fetch_library(
+                tokens["access_token"], account_id
+            )
+            return [_normalize_epic(g) for g in epic_games]
 
         if lp.platform == Platform.GOG:
-            games = await self._gog_client.get_user_games(tokens["access_token"])
-            return [_normalize_gog(g) for g in games]
+            gog_games: Any = await self._gog_client.get_user_games(tokens["access_token"])
+            return [_normalize_gog(g) for g in gog_games]
 
         if lp.platform == Platform.PSN:
-            games = await self._psn_client.get_played_games(tokens["access_token"])
-            return [_normalize_psn(g) for g in games]
+            psn_games: Any = await self._psn_client.get_played_games(tokens["access_token"])
+            return [_normalize_psn(g) for g in psn_games]
 
         return []
-
-
-def _normalize_steam(game: Any) -> LibraryGame:
-    last_played: str | None = None
-    if game.last_played:
-        last_played = datetime.fromtimestamp(game.last_played, tz=UTC).isoformat()
-    return LibraryGame(
-        game_id=f"steam_{game.app_id}",
-        title=game.name,
-        platform=Platform.STEAM,
-        cover_url=game.header_image or None,
-        playtime_minutes=game.playtime_forever,
-        last_played=last_played,
-        steam_app_id=game.app_id,
-    )
 
 
 def _normalize_epic(game: Any) -> LibraryGame:

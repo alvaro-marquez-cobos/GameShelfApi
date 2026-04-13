@@ -12,8 +12,8 @@ import re
 from urllib.parse import urlencode
 
 from modules.platforms.domain.entities.steam import SteamChartsGame, SteamGame, SteamPlayer
+from modules.platforms.domain.interfaces.services.i_steam_auth_client import ISteamAuthClient
 from shared.config import get_settings
-from shared.domain.interfaces.steam_auth_client import ISteamAuthClient
 from shared.infrastructure.cache.decorators import cached
 from shared.infrastructure.cache.keys import popular_games_key
 from shared.infrastructure.http.base_client import BaseHttpClient

@@ -6,10 +6,10 @@ from modules.platforms.domain.exceptions import PlatformAlreadyLinkedException
 from modules.platforms.domain.interfaces.repositories.i_platform_repository import (
     IPlatformRepository,
 )
+from modules.platforms.domain.interfaces.services.i_steam_auth_client import ISteamAuthClient
 from modules.platforms.domain.interfaces.use_cases.link_steam import ILinkSteamUseCase
 from shared.domain.entities.linked_platform import LinkedPlatform
 from shared.domain.enums.platform import Platform
-from shared.domain.interfaces.steam_auth_client import ISteamAuthClient
 from shared.exceptions import BadRequestException
 
 
