@@ -92,7 +92,6 @@ async def test_get_game_detail_full_enrichment(
     response = await async_client.get(
         "/api/v1/games/steam_570",
         headers={"Authorization": "Bearer valid-token"},
-        params={"title": "Dota 2"},
     )
 
     assert response.status_code == 200
@@ -149,24 +148,7 @@ async def test_get_game_detail_no_auth(async_client: AsyncClient) -> None:
     assert response.status_code == 401
 
 
-async def test_get_game_detail_uses_title_query_param(
-    async_client: AsyncClient,
-    mock_get_game_detail_use_case: AsyncMock,
-) -> None:
-    mock_get_game_detail_use_case.execute = AsyncMock(return_value=_game_detail())
-
-    await async_client.get(
-        "/api/v1/games/steam_570",
-        headers={"Authorization": "Bearer valid-token"},
-        params={"title": "Dota 2"},
-    )
-
-    mock_get_game_detail_use_case.execute.assert_awaited_once_with(
-        "test-uid-123", "steam_570", "Dota 2"
-    )
-
-
-async def test_get_game_detail_falls_back_to_game_id_when_no_title(
+async def test_get_game_detail_forwards_uid_and_game_id(
     async_client: AsyncClient,
     mock_get_game_detail_use_case: AsyncMock,
 ) -> None:
@@ -177,9 +159,7 @@ async def test_get_game_detail_falls_back_to_game_id_when_no_title(
         headers={"Authorization": "Bearer valid-token"},
     )
 
-    mock_get_game_detail_use_case.execute.assert_awaited_once_with(
-        "test-uid-123", "steam_570", "steam_570"
-    )
+    mock_get_game_detail_use_case.execute.assert_awaited_once_with("test-uid-123", "steam_570")
 
 
 # ---------------------------------------------------------------------------

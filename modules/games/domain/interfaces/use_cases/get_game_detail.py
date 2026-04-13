@@ -9,13 +9,12 @@ class IGetGameDetailUseCase(ABC):
     """Contract for retrieving fully enriched game detail."""
 
     @abstractmethod
-    async def execute(self, uid: str, game_id: str, title: str) -> GameDetail:
+    async def execute(self, uid: str, game_id: str) -> GameDetail:
         """Return enriched game detail for the given game.
 
         Args:
             uid: Firebase UID of the requesting user.
             game_id: Deterministic library game ID (e.g. ``steam_570``).
-            title: Display title used for external service lookups.
 
         Returns:
             A ``GameDetail`` with as much enrichment as available.

@@ -356,8 +356,11 @@ def get_get_game_detail_use_case(
     hltb: Annotated[IHltbClient, Depends(get_hltb_client)],
     itad: Annotated[IItadClient, Depends(get_itad_client)],
     wishlist_reader: Annotated[IWishlistReader, Depends(get_wishlist_reader)],
+    library_reader: Annotated[ILibraryReader, Depends(get_library_reader)],
 ) -> IGetGameDetailUseCase:
-    return GetGameDetailUseCase(repo, steam_metadata, protondb, hltb, itad, wishlist_reader)
+    return GetGameDetailUseCase(
+        repo, steam_metadata, protondb, hltb, itad, wishlist_reader, library_reader
+    )
 
 
 def get_get_game_dlcs_use_case(

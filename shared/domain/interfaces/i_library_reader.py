@@ -18,6 +18,11 @@ class ILibraryReader(ABC):
         ...
 
     @abstractmethod
+    async def get_game(self, uid: str, game_id: str) -> LibraryGame | None:
+        """Return a single library entry for the user, or ``None`` if absent."""
+        ...
+
+    @abstractmethod
     async def get_most_played(self, uid: str, limit: int) -> list[LibraryGame]:
         """Return the top ``limit`` games ordered by playtime descending.
 
