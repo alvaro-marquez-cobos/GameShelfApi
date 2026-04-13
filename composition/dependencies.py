@@ -49,6 +49,7 @@ from modules.platforms.application.link_psn_use_case import LinkPsnUseCase
 from modules.platforms.application.link_steam_manual_use_case import LinkSteamManualUseCase
 from modules.platforms.application.link_steam_use_case import LinkSteamUseCase
 from modules.platforms.application.unlink_platform_use_case import UnlinkPlatformUseCase
+from modules.platforms.domain.interfaces.services.i_steam_auth_client import ISteamAuthClient
 from modules.platforms.domain.interfaces.use_cases.get_linked_platforms import (
     IGetLinkedPlatformsUseCase,
 )
@@ -63,6 +64,10 @@ from modules.platforms.domain.interfaces.use_cases.link_steam_manual import (
 from modules.platforms.domain.interfaces.use_cases.unlink_platform import (
     IUnlinkPlatformUseCase,
 )
+from modules.platforms.infrastructure.adapters.home_content_provider import (
+    SteamHomeContentProvider,
+)
+from modules.platforms.infrastructure.adapters.steam_library_source import SteamLibrarySource
 from modules.platforms.infrastructure.clients.epic_auth_client import EpicAuthClient
 from modules.platforms.infrastructure.clients.gog_auth_client import GogAuthClient
 from modules.platforms.infrastructure.clients.psn_auth_client import PsnAuthClient
@@ -107,13 +112,14 @@ from shared.domain.interfaces.firebase_auth import IFirebaseAuthProvider
 from shared.domain.interfaces.gog_auth_client import IGogAuthClient
 from shared.domain.interfaces.hltb_client import IHltbClient
 from shared.domain.interfaces.i_game_reader import IGameReader
+from shared.domain.interfaces.i_home_content_provider import IHomeContentProvider
 from shared.domain.interfaces.i_library_reader import ILibraryReader
 from shared.domain.interfaces.i_platform_reader import IPlatformReader
+from shared.domain.interfaces.i_steam_library_source import ISteamLibrarySource
 from shared.domain.interfaces.i_wishlist_reader import IWishlistReader
 from shared.domain.interfaces.itad_client import IItadClient
 from shared.domain.interfaces.protondb_client import IProtonDbClient
 from shared.domain.interfaces.psn_auth_client import IPsnAuthClient
-from shared.domain.interfaces.steam_auth_client import ISteamAuthClient
 from shared.domain.interfaces.steam_metadata_client import ISteamMetadataClient
 from shared.domain.interfaces.token_blacklist import ITokenBlacklist
 from shared.domain.interfaces.user_repository import IUserRepository
@@ -211,6 +217,19 @@ def get_steam_auth_client() -> ISteamAuthClient:
     return SteamAuthClient()
 
 
+def get_steam_library_source(
+    steam_client: Annotated[ISteamAuthClient, Depends(get_steam_auth_client)],
+) -> ISteamLibrarySource:
+    return SteamLibrarySource(steam_client)
+
+
+def get_home_content_provider(
+    steam_client: Annotated[ISteamAuthClient, Depends(get_steam_auth_client)],
+    platform_reader: Annotated[IPlatformReader, Depends(get_platform_reader)],
+) -> IHomeContentProvider:
+    return SteamHomeContentProvider(steam_client, platform_reader)
+
+
 def get_epic_auth_client() -> IEpicAuthClient:
     return EpicAuthClient()
 
@@ -275,13 +294,13 @@ def get_get_library_use_case(
 def get_sync_library_use_case(
     repo: Annotated[FirestoreLibraryRepository, Depends(get_library_repository)],
     platform_reader: Annotated[IPlatformReader, Depends(get_platform_reader)],
-    steam_client: Annotated[ISteamAuthClient, Depends(get_steam_auth_client)],
+    steam_library_source: Annotated[ISteamLibrarySource, Depends(get_steam_library_source)],
     epic_client: Annotated[IEpicAuthClient, Depends(get_epic_auth_client)],
     gog_client: Annotated[IGogAuthClient, Depends(get_gog_auth_client)],
     psn_client: Annotated[IPsnAuthClient, Depends(get_psn_auth_client)],
 ) -> ISyncLibraryUseCase:
     return SyncLibraryUseCase(
-        repo, platform_reader, steam_client, epic_client, gog_client, psn_client
+        repo, platform_reader, steam_library_source, epic_client, gog_client, psn_client
     )
 
 
@@ -428,11 +447,10 @@ def get_unlink_platform_use_case(
 
 
 def get_get_home_use_case(
-    steam_client: Annotated[ISteamAuthClient, Depends(get_steam_auth_client)],
+    content_provider: Annotated[IHomeContentProvider, Depends(get_home_content_provider)],
     library_reader: Annotated[ILibraryReader, Depends(get_library_reader)],
-    platform_reader: Annotated[IPlatformReader, Depends(get_platform_reader)],
 ) -> IGetHomeUseCase:
-    return GetHomeUseCase(steam_client, library_reader, platform_reader)
+    return GetHomeUseCase(content_provider, library_reader)
 
 
 # ---------------------------------------------------------------------------

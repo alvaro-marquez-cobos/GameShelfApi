@@ -4,6 +4,7 @@ Configures the FastAPI app with CORS, exception handlers, lifespan
 management for Redis/Firebase connections, and module router registration.
 """
 
+import logging
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
@@ -22,6 +23,8 @@ from shared.infrastructure.http.rate_limiter import (
 )
 from shared.infrastructure.http.security_headers_middleware import SecurityHeadersMiddleware
 
+logger = logging.getLogger(__name__)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
@@ -33,13 +36,13 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
             await init_redis()
         except Exception:
-            pass
+            logger.exception("Failed to initialize Redis during startup")
         try:
             from shared.infrastructure.security.firebase_client import get_firebase_app
 
             get_firebase_app()
         except Exception:
-            pass
+            logger.exception("Failed to initialize Firebase during startup")
     yield
     if not settings.is_testing:
         try:
@@ -47,7 +50,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
             await close_redis()
         except Exception:
-            pass
+            logger.exception("Failed to close Redis during shutdown")
 
 
 def create_app() -> FastAPI:

@@ -24,6 +24,7 @@ from composition.dependencies import (
     get_unlink_platform_use_case,
 )
 from composition.security import get_current_user
+from modules.platforms.domain.interfaces.services.i_steam_auth_client import ISteamAuthClient
 from modules.platforms.domain.interfaces.use_cases.get_linked_platforms import (
     IGetLinkedPlatformsUseCase,
 )
@@ -56,7 +57,6 @@ from shared.domain.enums.platform import Platform
 from shared.domain.interfaces.epic_auth_client import IEpicAuthClient
 from shared.domain.interfaces.gog_auth_client import IGogAuthClient
 from shared.domain.interfaces.psn_auth_client import IPsnAuthClient
-from shared.domain.interfaces.steam_auth_client import ISteamAuthClient
 
 router = APIRouter()
 

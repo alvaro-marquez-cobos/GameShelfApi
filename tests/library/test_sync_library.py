@@ -5,18 +5,19 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from modules.library.application.sync_library_use_case import SyncLibraryUseCase
+from shared.domain.entities.library_game import LibraryGame
 from shared.domain.entities.linked_platform import LinkedPlatform
 from shared.domain.enums.platform import Platform
 
 
-def _steam_game(app_id: int, name: str, playtime: int = 100) -> MagicMock:
-    g = MagicMock()
-    g.app_id = app_id
-    g.name = name
-    g.playtime_forever = playtime
-    g.header_image = ""
-    g.last_played = 0
-    return g
+def _steam_library_game(app_id: int, title: str, playtime: int = 100) -> LibraryGame:
+    return LibraryGame(
+        game_id=f"steam_{app_id}",
+        title=title,
+        platform=Platform.STEAM,
+        playtime_minutes=playtime,
+        steam_app_id=app_id,
+    )
 
 
 def _gog_game(game_id: str, title: str) -> MagicMock:
@@ -38,7 +39,7 @@ def platform_reader() -> AsyncMock:
 
 
 @pytest.fixture
-def steam_client() -> AsyncMock:
+def steam_library_source() -> AsyncMock:
     return AsyncMock()
 
 
@@ -61,13 +62,13 @@ def psn_client() -> AsyncMock:
 def use_case(
     repo: AsyncMock,
     platform_reader: AsyncMock,
-    steam_client: AsyncMock,
+    steam_library_source: AsyncMock,
     epic_client: AsyncMock,
     gog_client: AsyncMock,
     psn_client: AsyncMock,
 ) -> SyncLibraryUseCase:
     return SyncLibraryUseCase(
-        repo, platform_reader, steam_client, epic_client, gog_client, psn_client
+        repo, platform_reader, steam_library_source, epic_client, gog_client, psn_client
     )
 
 
@@ -81,14 +82,14 @@ async def test_sync_steam_games_upserted(
     use_case: SyncLibraryUseCase,
     repo: AsyncMock,
     platform_reader: AsyncMock,
-    steam_client: AsyncMock,
+    steam_library_source: AsyncMock,
 ) -> None:
     platform_reader.get_linked_with_tokens.return_value = [
         (LinkedPlatform(platform=Platform.STEAM, username="76561198000000001"), {})
     ]
-    steam_client.get_owned_games.return_value = [
-        _steam_game(570, "Dota 2", playtime=500),
-        _steam_game(440, "TF2", playtime=200),
+    steam_library_source.get_owned_games.return_value = [
+        _steam_library_game(570, "Dota 2", playtime=500),
+        _steam_library_game(440, "TF2", playtime=200),
     ]
 
     count = await use_case.execute("uid_abc")
@@ -132,19 +133,18 @@ async def test_one_platform_fails_others_still_synced(
     use_case: SyncLibraryUseCase,
     repo: AsyncMock,
     platform_reader: AsyncMock,
-    steam_client: AsyncMock,
+    steam_library_source: AsyncMock,
     psn_client: AsyncMock,
 ) -> None:
     platform_reader.get_linked_with_tokens.return_value = [
         (LinkedPlatform(platform=Platform.STEAM, username="76561198000000001"), {}),
         (LinkedPlatform(platform=Platform.PSN, username="psn_user"), {"access_token": "tok"}),
     ]
-    steam_client.get_owned_games.return_value = [_steam_game(570, "Dota 2")]
+    steam_library_source.get_owned_games.return_value = [_steam_library_game(570, "Dota 2")]
     psn_client.get_played_games.side_effect = Exception("PSN API timeout")
 
     count = await use_case.execute("uid_abc")
 
-    # Steam games still synced despite PSN failure
     assert count == 1
     repo.upsert_games.assert_awaited_once()
 
@@ -175,15 +175,15 @@ async def test_sync_specific_platform_only(
     use_case: SyncLibraryUseCase,
     repo: AsyncMock,
     platform_reader: AsyncMock,
-    steam_client: AsyncMock,
+    steam_library_source: AsyncMock,
 ) -> None:
     platform_reader.get_linked_with_tokens.return_value = [
         (LinkedPlatform(platform=Platform.STEAM, username="76561198000000001"), {}),
         (LinkedPlatform(platform=Platform.GOG, username="gog_user"), {}),
     ]
-    steam_client.get_owned_games.return_value = [_steam_game(570, "Dota 2")]
+    steam_library_source.get_owned_games.return_value = [_steam_library_game(570, "Dota 2")]
 
     count = await use_case.execute("uid_abc", platform=Platform.STEAM)
 
     assert count == 1
-    steam_client.get_owned_games.assert_awaited_once()
+    steam_library_source.get_owned_games.assert_awaited_once()
