@@ -6,14 +6,19 @@ from shared.domain.enums.platform import Platform
 
 
 class GameSummaryResponse(BaseModel):
-    """Minimal game summary embedded in game detail responses."""
+    """Game summary embedded in game detail responses."""
 
     model_config = ConfigDict(populate_by_name=True)
 
-    id: str
+    game_id: str = Field(alias="gameId")
     title: str
     platform: Platform = Platform.STEAM
     steam_app_id: int | None = Field(default=None, alias="steamAppId")
+    cover_url: str | None = Field(default=None, alias="coverUrl")
+    portrait_cover_url: str | None = Field(default=None, alias="portraitCoverUrl")
+    playtime_minutes: int = Field(default=0, alias="playtime")
+    last_played: str | None = Field(default=None, alias="lastPlayed")
+    description: str = ""
 
 
 class ProtonDbResponse(BaseModel):
