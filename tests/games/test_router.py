@@ -5,6 +5,8 @@ from unittest.mock import AsyncMock
 
 from httpx import AsyncClient
 
+from shared.domain.enums.platform import Platform
+
 
 def _game_detail(
     with_proton: bool = True,
@@ -30,6 +32,7 @@ def _game_detail(
             metacritic_score=90,
             recommendation_count=1_000_000,
             screenshots=["https://cdn.steam.com/screenshot1.jpg"],
+            short_description="A free-to-play game.",
         )
         if with_steam
         else None
@@ -53,6 +56,12 @@ def _game_detail(
         game_id="steam_570",
         title="Dota 2",
         steam_app_id=570,
+        platform=Platform.STEAM,
+        cover_url="https://cdn.steam.com/header.jpg",
+        portrait_cover_url="https://cdn.cloudflare.steamstatic.com/steam/apps/570/library_600x900.jpg",
+        playtime_minutes=120,
+        last_played="2024-01-15T10:00:00Z",
+        description="A free-to-play game.",
         protondb=protondb,
         hltb=hltb,
         steam=steam,
@@ -96,8 +105,12 @@ async def test_get_game_detail_full_enrichment(
 
     assert response.status_code == 200
     data = response.json()
-    assert data["game"]["id"] == "steam_570"
+    assert data["game"]["gameId"] == "steam_570"
     assert data["game"]["steamAppId"] == 570
+    assert data["game"]["coverUrl"] == "https://cdn.steam.com/header.jpg"
+    assert data["game"]["playtime"] == 120
+    assert data["game"]["lastPlayed"] == "2024-01-15T10:00:00Z"
+    assert data["game"]["description"] == "A free-to-play game."
     assert data["protonDb"]["tier"] == "gold"
     assert data["howLongToBeat"]["mainHours"] == 30.0
     assert data["steamMetadata"]["metacriticScore"] == 90

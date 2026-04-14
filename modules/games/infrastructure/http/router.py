@@ -74,9 +74,15 @@ async def get_game_detail(
 
     return GameDetailResponse(
         game=GameSummaryResponse(
-            id=detail.game_id,
+            game_id=detail.game_id,
             title=detail.title,
+            platform=detail.platform,
             steam_app_id=detail.steam_app_id,
+            cover_url=detail.cover_url,
+            portrait_cover_url=detail.portrait_cover_url,
+            playtime_minutes=detail.playtime_minutes,
+            last_played=detail.last_played,
+            description=detail.description,
         ),
         proton_db=proton_db,
         how_long_to_beat=hltb,

@@ -9,6 +9,7 @@ from modules.games.domain.entities.game_detail import GameDetail
 from modules.games.domain.entities.itad import Deal
 from modules.games.domain.interfaces.repositories.i_game_repository import IGameRepository
 from modules.games.domain.interfaces.use_cases.get_game_detail import IGetGameDetailUseCase
+from shared.domain.enums.platform import Platform
 from shared.domain.interfaces.hltb_client import IHltbClient
 from shared.domain.interfaces.i_library_reader import ILibraryReader
 from shared.domain.interfaces.i_wishlist_reader import IWishlistReader
@@ -112,10 +113,27 @@ class GetGameDetailUseCase(IGetGameDetailUseCase):
         # ------------------------------------------------------------------
         # Phase 3 — Assemble
         # ------------------------------------------------------------------
+        cover_url = library_game.cover_url if library_game else None
+        portrait_cover_url = (
+            f"https://cdn.cloudflare.steamstatic.com/steam/apps/{steam_app_id}/library_600x900.jpg"
+            if steam_app_id
+            else None
+        )
+        playtime_minutes = library_game.playtime_minutes if library_game else 0
+        last_played = library_game.last_played if library_game else None
+        platform = library_game.platform if library_game else Platform.STEAM
+        description = steam.short_description if steam else ""
+
         return GameDetail(
             game_id=game_id,
             title=title,
             steam_app_id=steam_app_id,
+            platform=platform,
+            cover_url=cover_url,
+            portrait_cover_url=portrait_cover_url,
+            playtime_minutes=playtime_minutes,
+            last_played=last_played,
+            description=description,
             steam=steam,
             protondb=protondb,
             hltb=hltb,
