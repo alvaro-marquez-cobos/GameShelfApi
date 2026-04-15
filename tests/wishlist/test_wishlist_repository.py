@@ -215,3 +215,116 @@ async def test_get_wishlist_ids_returns_empty_set_when_empty(
     result = await repo.get_wishlist_ids("uid_abc")
 
     assert result == set()
+
+
+# ---------------------------------------------------------------------------
+# Invalid platform handling
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_get_items_filters_invalid_platform(repo: FirestoreWishlistRepository) -> None:
+    docs = [
+        _make_doc(
+            {
+                "game_id": "steam_1145360",
+                "title": "Hades",
+                "platform": "steam",
+                "added_at": "2026-01-01",
+            }
+        ),
+        _make_doc(
+            {
+                "game_id": "xbox_invalid",
+                "title": "Invalid Platform Game",
+                "platform": "xbox",
+                "added_at": "2026-01-02",
+            }
+        ),
+    ]
+    (
+        repo._db.collection.return_value.document.return_value.collection.return_value.get
+    ) = AsyncMock(return_value=docs)
+
+    result = await repo.get_items("uid_abc")
+
+    assert len(result) == 1
+    assert result[0].game_id == "steam_1145360"
+
+
+@pytest.mark.asyncio
+async def test_get_items_filters_empty_game_id(repo: FirestoreWishlistRepository) -> None:
+    docs = [
+        _make_doc(
+            {
+                "title": "Valid Game",
+                "platform": "steam",
+                "added_at": "2026-01-01",
+            }
+        ),
+        _make_doc(
+            {
+                "game_id": "gog_witcher3",
+                "title": "Another Valid Game",
+                "platform": "gog",
+                "added_at": "2026-01-02",
+            }
+        ),
+    ]
+    (
+        repo._db.collection.return_value.document.return_value.collection.return_value.get
+    ) = AsyncMock(return_value=docs)
+
+    result = await repo.get_items("uid_abc")
+
+    assert len(result) == 1
+    assert result[0].game_id == "gog_witcher3"
+
+
+@pytest.mark.asyncio
+async def test_get_items_filters_game_with_invalid_prefix(
+    repo: FirestoreWishlistRepository,
+) -> None:
+    docs = [
+        _make_doc(
+            {
+                "game_id": "99999",
+                "title": "No Valid Prefix",
+                "platform": "",
+                "added_at": "2026-01-01",
+            }
+        ),
+    ]
+    (
+        repo._db.collection.return_value.document.return_value.collection.return_value.get
+    ) = AsyncMock(return_value=docs)
+
+    result = await repo.get_items("uid_abc")
+
+    assert len(result) == 0
+
+
+@pytest.mark.asyncio
+async def test_get_items_defaults_legacy_uuid_items_to_steam(
+    repo: FirestoreWishlistRepository,
+) -> None:
+    """Legacy items written directly to Firestore have UUID game_ids and no platform field.
+    They should be returned with Platform.STEAM as a best-effort default."""
+    docs = [
+        _make_doc(
+            {
+                "game_id": "018d937f-384e-7122-bee0-26e3b8077924",
+                "title": "Legacy Game",
+                "added_at": "2026-01-01",
+            }
+        ),
+    ]
+    (
+        repo._db.collection.return_value.document.return_value.collection.return_value.get
+    ) = AsyncMock(return_value=docs)
+
+    result = await repo.get_items("uid_abc")
+
+    assert len(result) == 1
+    assert result[0].game_id == "018d937f-384e-7122-bee0-26e3b8077924"
+    assert result[0].platform == Platform.STEAM
