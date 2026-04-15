@@ -39,16 +39,31 @@ def _best_deal_percentage(deals: list[object]) -> int | None:
     return int(best)
 
 
-def _infer_platform(game_id: str, steam_app_id: int | None) -> tuple[str, Platform]:
+def _infer_platform(game_id: str, platform_str: str | None, steam_app_id: int | None) -> Platform:
+    """Resolve the Platform for a wishlist item without altering the game_id.
+
+    Resolution order:
+    1. Explicit ``platform`` field sent by the client.
+    2. Prefix embedded in a platform-prefixed ``game_id`` (e.g. ``steam_1145360``).
+    3. Presence of ``steam_app_id`` → STEAM.
+    """
+    if platform_str:
+        try:
+            return Platform.from_raw(platform_str)
+        except ValueError:
+            pass
+
     parts = game_id.split("_", 1)
     prefix = parts[0] if len(parts) > 1 else ""
     try:
-        platform = Platform.from_raw(prefix)
-        return game_id, platform
-    except ValueError as err:
-        if steam_app_id is not None:
-            return f"steam_{steam_app_id}", Platform.STEAM
-        raise BadRequestException("Could not infer platform from gameId") from err
+        return Platform.from_raw(prefix)
+    except ValueError:
+        pass
+
+    if steam_app_id is not None:
+        return Platform.STEAM
+
+    raise BadRequestException("Could not infer platform from gameId")
 
 
 @router.get("", response_model=GetWishlistResponse)
@@ -79,9 +94,9 @@ async def add_to_wishlist(
     current_user: Annotated[AuthenticatedUser, Depends(get_current_user)],
     use_case: Annotated[IAddToWishlistUseCase, Depends(get_add_to_wishlist_use_case)],
 ) -> WishlistItemResponse:
-    normalized_game_id, platform = _infer_platform(body.game_id, body.steam_app_id)
+    platform = _infer_platform(body.game_id, body.platform, body.steam_app_id)
     item = WishlistItem(
-        game_id=normalized_game_id,
+        game_id=body.game_id,
         title=body.title,
         platform=platform,
         cover_url=body.cover_url,

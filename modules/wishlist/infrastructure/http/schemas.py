@@ -33,6 +33,7 @@ class AddWishlistRequest(BaseModel):
     game_id: str = Field(alias="gameId")
     title: str
     cover_url: str | None = Field(default=None, alias="coverUrl")
+    platform: str | None = Field(default=None)
     steam_app_id: int | None = Field(default=None, alias="steamAppId")
 
 
