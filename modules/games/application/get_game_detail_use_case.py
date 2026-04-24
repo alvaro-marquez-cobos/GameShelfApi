@@ -54,7 +54,12 @@ class GetGameDetailUseCase(IGetGameDetailUseCase):
         self._wishlist_reader = wishlist_reader
         self._library_reader = library_reader
 
-    async def execute(self, uid: str, game_id: str) -> GameDetail:
+    async def execute(
+        self,
+        uid: str,
+        game_id: str,
+        platform: Platform | None = None,
+    ) -> GameDetail:
         # ------------------------------------------------------------------
         # Phase 1 — Resolve title and Steam app ID from user's library first,
         # then fall back to the shared games metadata collection.
@@ -121,7 +126,7 @@ class GetGameDetailUseCase(IGetGameDetailUseCase):
         )
         playtime_minutes = library_game.playtime_minutes if library_game else 0
         last_played = library_game.last_played if library_game else None
-        platform = library_game.platform if library_game else Platform.STEAM
+        platform = library_game.platform if library_game else (platform or Platform.STEAM)
         description = steam.short_description if steam else ""
 
         return GameDetail(

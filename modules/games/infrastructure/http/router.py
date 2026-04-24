@@ -2,7 +2,7 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 
 from composition.dependencies import get_get_game_detail_use_case, get_get_game_dlcs_use_case
 from composition.security import get_current_user
@@ -19,6 +19,7 @@ from modules.games.infrastructure.http.schemas import (
     SteamMetadataResponse,
 )
 from shared.domain.entities.user import AuthenticatedUser
+from shared.domain.enums.platform import Platform
 
 router = APIRouter()
 
@@ -28,8 +29,9 @@ async def get_game_detail(
     game_id: str,
     current_user: Annotated[AuthenticatedUser, Depends(get_current_user)],
     use_case: Annotated[IGetGameDetailUseCase, Depends(get_get_game_detail_use_case)],
+    platform: Annotated[Platform | None, Query()] = None,
 ) -> GameDetailResponse:
-    detail = await use_case.execute(current_user.uid, game_id)
+    detail = await use_case.execute(current_user.uid, game_id, platform=platform)
 
     proton_db = None
     if detail.protondb is not None:
