@@ -30,8 +30,14 @@ async def get_game_detail(
     current_user: Annotated[AuthenticatedUser, Depends(get_current_user)],
     use_case: Annotated[IGetGameDetailUseCase, Depends(get_get_game_detail_use_case)],
     platform: Annotated[Platform | None, Query()] = None,
+    steam_app_id: Annotated[int | None, Query()] = None,
 ) -> GameDetailResponse:
-    detail = await use_case.execute(current_user.uid, game_id, platform=platform)
+    detail = await use_case.execute(
+        current_user.uid,
+        game_id,
+        platform=platform,
+        steam_app_id_hint=steam_app_id,
+    )
 
     proton_db = None
     if detail.protondb is not None:

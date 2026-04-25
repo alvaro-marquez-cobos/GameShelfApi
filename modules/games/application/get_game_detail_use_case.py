@@ -59,6 +59,7 @@ class GetGameDetailUseCase(IGetGameDetailUseCase):
         uid: str,
         game_id: str,
         platform: Platform | None = None,
+        steam_app_id_hint: int | None = None,
     ) -> GameDetail:
         # ------------------------------------------------------------------
         # Phase 1 — Resolve title and Steam app ID from user's library first,
@@ -67,6 +68,9 @@ class GetGameDetailUseCase(IGetGameDetailUseCase):
         library_game = await self._library_reader.get_game(uid, game_id)
         title = library_game.title if library_game and library_game.title else game_id
         steam_app_id: int | None = library_game.steam_app_id if library_game else None
+
+        if steam_app_id is None and steam_app_id_hint is not None:
+            steam_app_id = steam_app_id_hint
 
         if steam_app_id is None:
             game_doc = await self._repo.get_game(game_id)
@@ -118,7 +122,16 @@ class GetGameDetailUseCase(IGetGameDetailUseCase):
         # ------------------------------------------------------------------
         # Phase 3 — Assemble
         # ------------------------------------------------------------------
-        cover_url = library_game.cover_url if library_game else None
+        # Use Steam name if available (for non-library games that resolved
+        # via Steam search or game_id prefix extraction)
+        if steam is not None and steam.name:
+            title = steam.name
+
+        cover_url = (
+            library_game.cover_url
+            if library_game
+            else (steam.header_image if steam and steam.header_image else None)
+        )
         portrait_cover_url = (
             f"https://cdn.cloudflare.steamstatic.com/steam/apps/{steam_app_id}/library_600x900.jpg"
             if steam_app_id
