@@ -10,6 +10,7 @@ class PopularGameResponse(BaseModel):
 
     model_config = ConfigDict(populate_by_name=True)
 
+    game_id: str = Field(alias="gameId")
     steam_app_id: int = Field(alias="steamAppId")
     title: str
     current_players: int = Field(alias="currentPlayers")

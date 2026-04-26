@@ -21,6 +21,7 @@ def _library_game(game_id: str, playtime: int = 100) -> LibraryGame:
 
 def _popular(app_id: int, title: str, players: int = 1000) -> PopularGame:
     return PopularGame(
+        game_id=f"steam_{app_id}",
         steam_app_id=app_id,
         title=title,
         current_players=players,
