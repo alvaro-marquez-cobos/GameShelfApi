@@ -27,7 +27,6 @@ from modules.wishlist.infrastructure.http.schemas import (
 )
 from shared.domain.entities.user import AuthenticatedUser
 from shared.domain.enums.platform import Platform
-from shared.exceptions import BadRequestException
 
 router = APIRouter()
 
@@ -46,6 +45,8 @@ def _infer_platform(game_id: str, platform_str: str | None, steam_app_id: int | 
     1. Explicit ``platform`` field sent by the client.
     2. Prefix embedded in a platform-prefixed ``game_id`` (e.g. ``steam_1145360``).
     3. Presence of ``steam_app_id`` → STEAM.
+    4. Default to STEAM for ITAD games where platform is irrelevant since the
+       ITAD→Steam transformation happens in game detail enrichment.
     """
     if platform_str:
         try:
@@ -63,7 +64,7 @@ def _infer_platform(game_id: str, platform_str: str | None, steam_app_id: int | 
     if steam_app_id is not None:
         return Platform.STEAM
 
-    raise BadRequestException("Could not infer platform from gameId")
+    return Platform.STEAM
 
 
 @router.get("", response_model=GetWishlistResponse)

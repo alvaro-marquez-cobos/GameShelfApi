@@ -163,9 +163,36 @@ async def test_steam_app_id_extracted_from_game_id(
     result = await use_case.execute("uid_abc", "steam_570")
 
     assert result.steam_app_id == 570
-    assert result.title == "steam_570"
+    assert result.title == "Dota 2"
     steam_metadata.search_store.assert_not_awaited()
     repo.update_steam_app_id.assert_awaited_once_with("steam_570", 570)
+
+
+@pytest.mark.asyncio
+async def test_title_and_cover_fallback_for_non_library_games(
+    use_case: GetGameDetailUseCase,
+    repo: AsyncMock,
+    steam_metadata: AsyncMock,
+    itad: AsyncMock,
+    wishlist_reader: AsyncMock,
+    library_reader: AsyncMock,
+) -> None:
+    library_reader.get_game.return_value = None
+    repo.get_game.return_value = None
+    steam_metadata.get_app_details.return_value = SteamAppDetails(
+        app_id=570,
+        name="Team Fortress 2",
+        short_description="A multiplayer FPS",
+        header_image="https://cdn.cloudflare.steamstatic.com/steam/apps/570/header.jpg",
+    )
+    itad.lookup_game_id_by_steam_app_id.return_value = None
+    wishlist_reader.is_in_wishlist.return_value = False
+
+    result = await use_case.execute("uid_abc", "steam_570")
+
+    assert result.title == "Team Fortress 2"
+    assert result.cover_url == "https://cdn.cloudflare.steamstatic.com/steam/apps/570/header.jpg"
+    assert result.steam_app_id == 570
 
 
 # ---------------------------------------------------------------------------
@@ -278,3 +305,80 @@ async def test_unresolvable_steam_app_id_returns_base_only(
     assert result.steam_app_id is None
     assert result.steam is None
     assert result.deals == []
+
+
+# ---------------------------------------------------------------------------
+# steam_app_id_hint — short-circuits Phase 1 fallback chain
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_steam_app_id_hint_short_circuits_fallback(
+    use_case: GetGameDetailUseCase,
+    repo: AsyncMock,
+    steam_metadata: AsyncMock,
+    protondb: AsyncMock,
+    hltb: AsyncMock,
+    itad: AsyncMock,
+    wishlist_reader: AsyncMock,
+    library_reader: AsyncMock,
+) -> None:
+    library_reader.get_game.return_value = None
+    repo.get_game.return_value = None
+    steam_metadata.get_app_details.return_value = SteamAppDetails(
+        app_id=1091500, name="Cyberpunk 2077", short_description="RPG"
+    )
+    protondb.get_compatibility_rating.return_value = ProtonDbRating(
+        tier="platinum", trending_tier="platinum", total=1200
+    )
+    hltb.get_game_duration.return_value = HltbResult(
+        main_story=55.0,
+        main_extra=90.0,
+        completionist=120.0,
+    )
+    itad.lookup_game_id_by_steam_app_id.return_value = "itad-cyberpunk"
+    itad.get_prices_for_game.return_value = [_deal()]
+    wishlist_reader.is_in_wishlist.return_value = False
+
+    result = await use_case.execute("uid_abc", "gog_99999", steam_app_id_hint=1091500)
+
+    assert result.steam_app_id == 1091500
+    assert result.title == "Cyberpunk 2077"
+    assert result.steam is not None
+    assert result.protondb is not None
+    assert result.hltb is not None
+    assert len(result.deals) == 1
+    assert result.is_in_wishlist is False
+    # Fallbacks should NOT be called when hint is provided
+    steam_metadata.search_store.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_steam_app_id_hint_with_platform(
+    use_case: GetGameDetailUseCase,
+    repo: AsyncMock,
+    steam_metadata: AsyncMock,
+    library_reader: AsyncMock,
+) -> None:
+    library_reader.get_game.return_value = None
+    repo.get_game.return_value = None
+    steam_metadata.get_app_details.return_value = SteamAppDetails(
+        app_id=570, name="Dota 2", short_description="MOBA"
+    )
+    itad_lookup = AsyncMock(return_value=None)
+    itad = AsyncMock()
+    itad.lookup_game_id_by_steam_app_id = itad_lookup
+    itad.get_prices_for_game = AsyncMock(return_value=[])
+    wishlist_reader_mock = AsyncMock()
+    wishlist_reader_mock.is_in_wishlist = AsyncMock(return_value=False)
+
+    result = await use_case.execute(
+        "uid_abc",
+        "epic_abc123",
+        platform=Platform.EPIC,
+        steam_app_id_hint=570,
+    )
+
+    assert result.steam_app_id == 570
+    assert result.platform == Platform.EPIC
+    assert result.steam is not None
