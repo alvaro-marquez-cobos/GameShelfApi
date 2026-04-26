@@ -8,12 +8,14 @@ class PopularGame:
     """A globally popular game.
 
     Attributes:
+        game_id: Internal unique identifier (e.g. "steam_570").
         steam_app_id: Steam App ID, if sourced from Steam.
         title: Game title.
         current_players: Approximate concurrent player count.
         cover_url: Cover image URL, or None.
     """
 
+    game_id: str
     steam_app_id: int
     title: str
     current_players: int

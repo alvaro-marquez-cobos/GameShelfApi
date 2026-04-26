@@ -29,8 +29,10 @@ def _popular_game(
     steam_app_id: int = 570,
     title: str = "Dota 2",
     current_players: int = 500_000,
+    game_id: str = "steam_570",
 ) -> SimpleNamespace:
     return SimpleNamespace(
+        game_id=game_id,
         steam_app_id=steam_app_id,
         title=title,
         current_players=current_players,
@@ -79,6 +81,7 @@ async def test_get_home_with_all_sections(
     assert len(data["mostPlayed"]) == 1
     assert len(data["popularNow"]) == 1
     assert data["popularNow"][0]["currentPlayers"] == 500_000
+    assert data["popularNow"][0]["gameId"] == "steam_570"
 
 
 async def test_get_home_optional_sections_null_when_missing(
@@ -116,7 +119,12 @@ async def test_get_popular_returns_games(
     mock_get_home_use_case: AsyncMock,
 ) -> None:
     games = [
-        _popular_game(steam_app_id=i, title=f"Game {i}", current_players=i * 1000)
+        _popular_game(
+            steam_app_id=i,
+            title=f"Game {i}",
+            current_players=i * 1000,
+            game_id=f"steam_{i}",
+        )
         for i in range(1, 6)
     ]
     mock_get_home_use_case.execute = AsyncMock(return_value=_home_data(popular_now=games))
@@ -136,7 +144,9 @@ async def test_get_popular_respects_limit(
     async_client: AsyncClient,
     mock_get_home_use_case: AsyncMock,
 ) -> None:
-    games = [_popular_game(steam_app_id=i, title=f"Game {i}") for i in range(1, 11)]
+    games = [
+        _popular_game(steam_app_id=i, title=f"Game {i}", game_id=f"steam_{i}") for i in range(1, 11)
+    ]
     mock_get_home_use_case.execute = AsyncMock(return_value=_home_data(popular_now=games))
 
     response = await async_client.get(

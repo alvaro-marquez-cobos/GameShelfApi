@@ -43,6 +43,7 @@ async def get_home(
 
     popular = [
         PopularGameResponse(
+            game_id=game.game_id,
             steam_app_id=game.steam_app_id,
             title=game.title,
             current_players=game.current_players,
@@ -68,6 +69,7 @@ async def get_popular(
     popular_now = data.popular_now or []
     games = [
         PopularGameResponse(
+            game_id=game.game_id,
             steam_app_id=game.steam_app_id,
             title=game.title,
             current_players=game.current_players,
