@@ -21,6 +21,8 @@ class LibraryGame:
             this game is not on Steam or the ID has not been resolved yet.
         extra: Platform-specific fields that do not have a canonical place
             (e.g. Epic namespace, GOG product ID).
+        game_type: Type of game entry ('GAME' or 'DLC'), or None if not set.
+        parent_game_id: ID of the parent game if this is a DLC entry, or None.
     """
 
     game_id: str
@@ -31,3 +33,5 @@ class LibraryGame:
     last_played: str | None = None
     steam_app_id: int | None = None
     extra: dict[str, object] = field(default_factory=dict)
+    game_type: str | None = None
+    parent_game_id: str | None = None

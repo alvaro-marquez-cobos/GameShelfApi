@@ -36,6 +36,8 @@ def _to_game_response(game: LibraryGame) -> LibraryGameResponse:
         playtime_minutes=game.playtime_minutes,
         last_played=game.last_played,
         steam_app_id=game.steam_app_id,
+        game_type=game.game_type,
+        parent_game_id=game.parent_game_id,
     )
 
 
@@ -76,6 +78,9 @@ async def get_library_stats(
         pc_games=stats.pc_games,
         console_games=stats.console_games,
         total_playtime=stats.total_playtime_hours,
+        total_unique=stats.total_unique,
+        pc_unique=stats.pc_unique,
+        console_unique=stats.console_unique,
     )
 
 

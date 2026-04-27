@@ -92,6 +92,8 @@ def _doc_to_library_game(doc: dict[str, Any]) -> LibraryGame:
         last_played=raw_last_played,
         steam_app_id=doc.get("steam_app_id", doc.get("steamAppId")),
         extra=doc.get("extra", {}),
+        game_type=doc.get("game_type", doc.get("gameType")),
+        parent_game_id=doc.get("parent_game_id", doc.get("parentGameId")),
     )
 
 
@@ -105,4 +107,6 @@ def _library_game_to_doc(game: LibraryGame) -> dict[str, Any]:
         "last_played": game.last_played,
         "steam_app_id": game.steam_app_id,
         "extra": game.extra,
+        "game_type": game.game_type,
+        "parent_game_id": game.parent_game_id,
     }
