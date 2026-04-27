@@ -86,29 +86,42 @@ class SyncLibraryUseCase(ISyncLibraryUseCase):
 
 
 def _normalize_epic(game: Any) -> LibraryGame:
+    title = getattr(game, "app_name", "")
     return LibraryGame(
-        game_id=f"epic_{game.namespace}_{game.app_name}",
-        title=game.app_name,
+        game_id=f"epic_{game.namespace}_{title}",
+        title=title,
         platform=Platform.EPIC,
         extra={"namespace": game.namespace, "catalog_item_id": game.catalog_item_id},
+        game_type=_infer_game_type(title),
     )
 
 
 def _normalize_gog(game: Any) -> LibraryGame:
+    title = getattr(game, "title", "")
     return LibraryGame(
         game_id=f"gog_{game.id}",
-        title=game.title,
+        title=title,
         platform=Platform.GOG,
         cover_url=getattr(game, "image_url", None),
+        game_type=_infer_game_type(title),
     )
 
 
 def _normalize_psn(game: Any) -> LibraryGame:
+    title = getattr(game, "name", "")
     return LibraryGame(
         game_id=f"psn_{game.title_id}",
-        title=game.name,
+        title=title,
         platform=Platform.PSN,
         cover_url=getattr(game, "image_url", None),
         playtime_minutes=getattr(game, "play_duration_minutes", 0),
         last_played=getattr(game, "last_played_at", None),
+        game_type=_infer_game_type(title),
     )
+
+
+def _infer_game_type(title: str) -> str | None:
+    title_lower = title.lower()
+    if "dlc" in title_lower or "expansion pack" in title_lower:
+        return "DLC"
+    return "GAME"

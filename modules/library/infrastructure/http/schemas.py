@@ -18,6 +18,8 @@ class LibraryGameResponse(BaseModel):
     playtime_minutes: int = Field(default=0, alias="playtimeMinutes")
     last_played: str | None = Field(default=None, alias="lastPlayed")
     steam_app_id: int | None = Field(default=None, alias="steamAppId")
+    game_type: str | None = Field(default=None, alias="gameType")
+    parent_game_id: str | None = Field(default=None, alias="parentGameId")
 
 
 class GetLibraryResponse(BaseModel):
@@ -39,6 +41,9 @@ class LibraryStatsResponse(BaseModel):
     pc_games: int = Field(alias="pcGames")
     console_games: int = Field(alias="consoleGames")
     total_playtime: float = Field(alias="totalPlaytime")
+    total_unique: int = Field(alias="totalUnique")
+    pc_unique: int = Field(alias="pcUnique")
+    console_unique: int = Field(alias="consoleUnique")
 
 
 class SyncLibraryRequest(BaseModel):
