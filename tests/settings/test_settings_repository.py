@@ -42,8 +42,7 @@ async def test_get_itad_country_returns_code_when_exists(
 ) -> None:
     doc = _make_doc({"country_code": "ES"})
     (
-        repo._db.collection.return_value.document.return_value
-        .collection.return_value.document.return_value.get
+        repo._db.collection.return_value.document.return_value.collection.return_value.document.return_value.get
     ) = AsyncMock(return_value=doc)
 
     result = await repo.get_itad_country("uid-123")
@@ -58,8 +57,7 @@ async def test_get_itad_country_returns_none_when_doc_missing(
 ) -> None:
     doc = _make_doc(None)
     (
-        repo._db.collection.return_value.document.return_value
-        .collection.return_value.document.return_value.get
+        repo._db.collection.return_value.document.return_value.collection.return_value.document.return_value.get
     ) = AsyncMock(return_value=doc)
 
     result = await repo.get_itad_country("uid-456")
@@ -74,8 +72,7 @@ async def test_get_itad_country_returns_none_when_field_missing(
 ) -> None:
     doc = _make_doc({})
     (
-        repo._db.collection.return_value.document.return_value
-        .collection.return_value.document.return_value.get
+        repo._db.collection.return_value.document.return_value.collection.return_value.document.return_value.get
     ) = AsyncMock(return_value=doc)
 
     result = await repo.get_itad_country("uid-789")
@@ -95,8 +92,7 @@ async def test_update_itad_country_persists_code(
 ) -> None:
     set_mock = AsyncMock()
     (
-        repo._db.collection.return_value.document.return_value
-        .collection.return_value.document.return_value.set
+        repo._db.collection.return_value.document.return_value.collection.return_value.document.return_value.set
     ) = set_mock
 
     await repo.update_itad_country("uid-abc", "MX")
@@ -110,8 +106,7 @@ async def test_update_itad_country_writes_correct_path(
     mock_firestore: MagicMock,
 ) -> None:
     (
-        repo._db.collection.return_value.document.return_value
-        .collection.return_value.document.return_value.set
+        repo._db.collection.return_value.document.return_value.collection.return_value.document.return_value.set
     ) = AsyncMock()
 
     await repo.update_itad_country("uid-abc", "MX")
@@ -130,8 +125,7 @@ async def test_update_itad_country_overwrites_existing(
 ) -> None:
     set_mock = AsyncMock()
     (
-        repo._db.collection.return_value.document.return_value
-        .collection.return_value.document.return_value.set
+        repo._db.collection.return_value.document.return_value.collection.return_value.document.return_value.set
     ) = set_mock
 
     await repo.update_itad_country("uid-abc", "DE")
@@ -154,8 +148,7 @@ async def test_delete_all_does_not_remove_country(
 
     # Set up delete mock before calling delete_all
     (
-        repo._db.collection.return_value.document.return_value
-        .collection.return_value.document.return_value.delete
+        repo._db.collection.return_value.document.return_value.collection.return_value.document.return_value.delete
     ) = AsyncMock()
 
     await repo.delete_all("uid-123")
@@ -176,15 +169,13 @@ async def test_round_trip_update_then_get(
 ) -> None:
     # Setup update path
     (
-        repo._db.collection.return_value.document.return_value
-        .collection.return_value.document.return_value.set
+        repo._db.collection.return_value.document.return_value.collection.return_value.document.return_value.set
     ) = AsyncMock()
 
     # Setup get path — return document with country_code
     doc = _make_doc({"country_code": "BR"})
     (
-        repo._db.collection.return_value.document.return_value
-        .collection.return_value.document.return_value.get
+        repo._db.collection.return_value.document.return_value.collection.return_value.document.return_value.get
     ) = AsyncMock(return_value=doc)
 
     await repo.update_itad_country("uid-rt", "BR")
