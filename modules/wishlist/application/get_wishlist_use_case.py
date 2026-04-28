@@ -51,7 +51,9 @@ class GetWishlistUseCase(IGetWishlistUseCase):
         deals_by_id: dict[str, list[Any]] = {}
         if itad_ids:
             try:
-                deals_by_id = await self._itad.get_prices_for_games_batch(itad_ids, effective_country)
+                deals_by_id = await self._itad.get_prices_for_games_batch(
+                    itad_ids, effective_country
+                )
             except Exception:
                 logger.warning("ITAD batch price lookup failed; returning empty deals")
 

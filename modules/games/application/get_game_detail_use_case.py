@@ -111,7 +111,9 @@ class GetGameDetailUseCase(IGetGameDetailUseCase):
                 self._steam_metadata.get_app_details(steam_app_id),
                 self._protondb.get_compatibility_rating(str(steam_app_id)),
                 self._hltb.get_game_duration(title),
-                self._get_itad_deals(steam_app_id, title, effective_country),  # Pass title for fallback
+                self._get_itad_deals(
+                    steam_app_id, title, effective_country
+                ),  # Pass title for fallback
                 self._wishlist_reader.is_in_wishlist(uid, game_id),
                 return_exceptions=True,
             )
