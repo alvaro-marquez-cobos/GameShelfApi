@@ -404,7 +404,9 @@ async def test_itad_fallback_via_lookup_game_id(
     wishlist_reader: AsyncMock,
     library_reader: AsyncMock,
 ) -> None:
-    """When lookup_game_id_by_steam_app_id fails, fallback uses lookup_game_id + get_game_info verification."""
+    """When lookup_game_id_by_steam_app_id fails, fallback uses
+    lookup_game_id + get_game_info verification.
+    """
     from modules.games.domain.entities.itad import ItadGameInfo
 
     library_reader.get_game.return_value = _library_game()
@@ -446,7 +448,9 @@ async def test_itad_fallback_discards_mismatched_steam_app_id(
     wishlist_reader: AsyncMock,
     library_reader: AsyncMock,
 ) -> None:
-    """When lookup_game_id returns a UUID but get_game_info has different steam_app_id, discard it."""
+    """When lookup_game_id returns a UUID but get_game_info has
+    different steam_app_id, discard it.
+    """
     from modules.games.domain.entities.itad import ItadGameInfo
 
     library_reader.get_game.return_value = _library_game()

@@ -68,7 +68,9 @@ class ItadClient(IItadClient):
         if not titles:
             return result_map
         import asyncio as _asyncio
-        results = await _asyncio.gather(*[self.lookup_game_id(t) for t in titles], return_exceptions=True)
+
+        lookups = [self.lookup_game_id(t) for t in titles]
+        results = await _asyncio.gather(*lookups, return_exceptions=True)
         for title, res in zip(titles, results, strict=False):
             result_map[title] = res if isinstance(res, str) else None
         return result_map

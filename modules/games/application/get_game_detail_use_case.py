@@ -178,9 +178,14 @@ class GetGameDetailUseCase(IGetGameDetailUseCase):
             itad_id = await self._itad.lookup_game_id(title)
             if itad_id is not None:
                 # Discard only if ITAD confirms a different steam_app_id (wrong game).
-                # If info is None or steam_app_id is unlinked, give the UUID the benefit of the doubt.
+                # If info is None or steam_app_id is unlinked, give the UUID
+                # the benefit of the doubt.
                 info = await self._itad.get_game_info(itad_id)
-                if info is not None and info.steam_app_id is not None and info.steam_app_id != steam_app_id:
+                if (
+                    info is not None
+                    and info.steam_app_id is not None
+                    and info.steam_app_id != steam_app_id
+                ):
                     itad_id = None
 
         if itad_id is None:
