@@ -118,7 +118,7 @@ async def test_get_prices_returns_list_of_deals(client: ItadClient) -> None:
         mock.post("/games/prices/v2").mock(
             return_value=httpx.Response(200, json=[{"deals": [_DEAL_ENTRY]}])
         )
-        result = await client.get_prices_for_game(_GAME_ID)
+        result = await client.get_prices_for_game(_GAME_ID, "US")
 
     assert len(result) == 1
     deal = result[0]
@@ -133,7 +133,7 @@ async def test_get_prices_returns_list_of_deals(client: ItadClient) -> None:
 async def test_get_prices_returns_empty_list_on_error(client: ItadClient) -> None:
     with respx.mock(base_url=_BASE) as mock:
         mock.post("/games/prices/v2").mock(return_value=httpx.Response(500))
-        result = await client.get_prices_for_game(_GAME_ID)
+        result = await client.get_prices_for_game(_GAME_ID, "US")
 
     assert result == []
 
@@ -153,7 +153,7 @@ async def test_get_prices_batch_maps_game_ids(client: ItadClient) -> None:
                 json=[{"deals": [_DEAL_ENTRY]}, {"deals": []}],
             )
         )
-        result = await client.get_prices_for_games_batch(game_ids)
+        result = await client.get_prices_for_games_batch(game_ids, "US")
 
     assert len(result[_GAME_ID]) == 1
     assert result["other-id"] == []
@@ -177,7 +177,7 @@ async def test_get_historical_low_returns_deal(client: ItadClient) -> None:
     ]
     with respx.mock(base_url=_BASE) as mock:
         mock.post("/games/historylow/v1").mock(return_value=httpx.Response(200, json=low_payload))
-        result = await client.get_historical_low(_GAME_ID)
+        result = await client.get_historical_low(_GAME_ID, "US")
 
     assert isinstance(result, Deal)
     assert result.store_name == "Steam"
@@ -190,7 +190,7 @@ async def test_get_historical_low_returns_deal(client: ItadClient) -> None:
 async def test_get_historical_low_returns_none_on_empty(client: ItadClient) -> None:
     with respx.mock(base_url=_BASE) as mock:
         mock.post("/games/historylow/v1").mock(return_value=httpx.Response(200, json=[]))
-        result = await client.get_historical_low(_GAME_ID)
+        result = await client.get_historical_low(_GAME_ID, "US")
 
     assert result is None
 

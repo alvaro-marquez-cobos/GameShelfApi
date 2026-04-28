@@ -3,7 +3,7 @@
 from datetime import UTC, datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 
 from composition.dependencies import (
     get_add_to_wishlist_use_case,
@@ -71,8 +71,9 @@ def _infer_platform(game_id: str, platform_str: str | None, steam_app_id: int | 
 async def get_wishlist(
     current_user: Annotated[AuthenticatedUser, Depends(get_current_user)],
     use_case: Annotated[IGetWishlistUseCase, Depends(get_get_wishlist_use_case)],
+    country: Annotated[str | None, Query(min_length=2, max_length=2)] = None,
 ) -> GetWishlistResponse:
-    rows = await use_case.execute(current_user.uid)
+    rows = await use_case.execute(current_user.uid, country=country)
     return GetWishlistResponse(
         items=[
             WishlistItemResponse(

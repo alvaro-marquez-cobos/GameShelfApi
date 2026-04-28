@@ -45,7 +45,7 @@ class IItadClient(ABC):
         ...
 
     @abstractmethod
-    async def get_prices_for_game(self, itad_game_id: str, country: str = "US") -> list[Deal]:
+    async def get_prices_for_game(self, itad_game_id: str, country: str) -> list[Deal]:
         """Fetch current store deals for a game.
 
         Args:
@@ -59,7 +59,7 @@ class IItadClient(ABC):
 
     @abstractmethod
     async def get_prices_for_games_batch(
-        self, itad_game_ids: list[str], country: str = "US"
+        self, itad_game_ids: list[str], country: str
     ) -> dict[str, list[Deal]]:
         """Fetch current deals for multiple games in a single request.
 
@@ -73,7 +73,7 @@ class IItadClient(ABC):
         ...
 
     @abstractmethod
-    async def get_historical_low(self, itad_game_id: str, country: str = "US") -> Deal | None:
+    async def get_historical_low(self, itad_game_id: str, country: str) -> Deal | None:
         """Fetch the all-time historical low price for a game.
 
         Args:

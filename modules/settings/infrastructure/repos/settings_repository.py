@@ -32,5 +32,16 @@ class FirestoreSettingsRepository(BaseFirestoreRepository, ISettingsRepository):
             _COLLECTION, uid, _SUBCOLLECTION, "notifications", {"preferences": prefs}
         )
 
+    async def get_itad_country(self, uid: str) -> str | None:
+        doc = await self.get_subdoc(_COLLECTION, uid, _SUBCOLLECTION, "country")
+        if doc is None:
+            return None
+        return doc.get("country_code")
+
+    async def update_itad_country(self, uid: str, country: str) -> None:
+        await self.set_subdoc(
+            _COLLECTION, uid, _SUBCOLLECTION, "country", {"country_code": country}
+        )
+
     async def delete_all(self, uid: str) -> None:
         await self.delete_subdoc(_COLLECTION, uid, _SUBCOLLECTION, "notifications")

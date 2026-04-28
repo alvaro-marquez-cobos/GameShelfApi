@@ -43,6 +43,7 @@ class Settings(BaseSettings):
     # External APIs
     steam_api_key: str = ""
     itad_api_key: str = ""
+    itad_default_country: str = "US"
     epic_client_id: str = ""
     epic_client_secret: str = ""
     gog_client_id: str = ""

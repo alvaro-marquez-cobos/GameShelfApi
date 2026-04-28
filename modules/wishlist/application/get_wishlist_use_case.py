@@ -3,11 +3,15 @@
 import logging
 from typing import Any
 
+from modules.settings.domain.interfaces.repositories.i_settings_repository import (
+    ISettingsRepository,
+)
 from modules.wishlist.domain.entities.wishlist_item import WishlistItem
 from modules.wishlist.domain.interfaces.repositories.i_wishlist_repository import (
     IWishlistRepository,
 )
 from modules.wishlist.domain.interfaces.use_cases.get_wishlist import IGetWishlistUseCase
+from shared.config import get_settings
 from shared.domain.interfaces.itad_client import IItadClient
 
 logger = logging.getLogger(__name__)
@@ -16,14 +20,24 @@ logger = logging.getLogger(__name__)
 class GetWishlistUseCase(IGetWishlistUseCase):
     """Fetch wishlist items and enrich each with current ITAD deals."""
 
-    def __init__(self, repo: IWishlistRepository, itad_client: IItadClient) -> None:
+    def __init__(
+        self,
+        repo: IWishlistRepository,
+        itad_client: IItadClient,
+        settings_repo: ISettingsRepository | None = None,
+    ) -> None:
         self._repo = repo
         self._itad = itad_client
+        self._settings_repo = settings_repo
 
-    async def execute(self, uid: str) -> list[tuple[WishlistItem, list[Any]]]:
+    async def execute(
+        self, uid: str, country: str | None = None
+    ) -> list[tuple[WishlistItem, list[Any]]]:
         items = await self._repo.get_items(uid)
         if not items:
             return []
+
+        effective_country = await self._resolve_country(uid, country)
 
         # Batch resolve ITAD game IDs for all titles
         titles = [item.title for item in items]
@@ -37,7 +51,7 @@ class GetWishlistUseCase(IGetWishlistUseCase):
         deals_by_id: dict[str, list[Any]] = {}
         if itad_ids:
             try:
-                deals_by_id = await self._itad.get_prices_for_games_batch(itad_ids)
+                deals_by_id = await self._itad.get_prices_for_games_batch(itad_ids, effective_country)
             except Exception:
                 logger.warning("ITAD batch price lookup failed; returning empty deals")
 
@@ -48,3 +62,13 @@ class GetWishlistUseCase(IGetWishlistUseCase):
             result.append((item, deals))
 
         return result
+
+    async def _resolve_country(self, uid: str, country: str | None) -> str:
+        """Resolve effective country from param or user settings."""
+        if country is not None:
+            return country
+        if self._settings_repo is not None:
+            user_country = await self._settings_repo.get_itad_country(uid)
+            if user_country is not None:
+                return user_country
+        return get_settings().itad_default_country

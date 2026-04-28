@@ -209,6 +209,16 @@ def get_wishlist_reader(
 
 
 # ---------------------------------------------------------------------------
+# Settings repository
+# (moved early — needed by game detail and wishlist use cases)
+# ---------------------------------------------------------------------------
+
+
+def get_settings_repository() -> ISettingsRepository:
+    return FirestoreSettingsRepository()
+
+
+# ---------------------------------------------------------------------------
 # Platform auth clients
 # ---------------------------------------------------------------------------
 
@@ -318,8 +328,9 @@ def get_get_library_stats_use_case(
 def get_get_wishlist_use_case(
     repo: Annotated[FirestoreWishlistRepository, Depends(get_wishlist_repository)],
     itad_client: Annotated[IItadClient, Depends(get_itad_client)],
+    settings_repo: Annotated[ISettingsRepository | None, Depends(get_settings_repository)] = None,
 ) -> IGetWishlistUseCase:
-    return GetWishlistUseCase(repo, itad_client)
+    return GetWishlistUseCase(repo, itad_client, settings_repo)
 
 
 def get_add_to_wishlist_use_case(
@@ -357,9 +368,10 @@ def get_get_game_detail_use_case(
     itad: Annotated[IItadClient, Depends(get_itad_client)],
     wishlist_reader: Annotated[IWishlistReader, Depends(get_wishlist_reader)],
     library_reader: Annotated[ILibraryReader, Depends(get_library_reader)],
+    settings_repo: Annotated[ISettingsRepository | None, Depends(get_settings_repository)] = None,
 ) -> IGetGameDetailUseCase:
     return GetGameDetailUseCase(
-        repo, steam_metadata, protondb, hltb, itad, wishlist_reader, library_reader
+        repo, steam_metadata, protondb, hltb, itad, wishlist_reader, library_reader, settings_repo
     )
 
 
@@ -457,12 +469,9 @@ def get_get_home_use_case(
 
 
 # ---------------------------------------------------------------------------
-# Settings repository and use cases
+# Settings use cases
+# (get_settings_repository is defined earlier — needed by game detail and wishlist)
 # ---------------------------------------------------------------------------
-
-
-def get_settings_repository() -> ISettingsRepository:
-    return FirestoreSettingsRepository()
 
 
 def get_get_notification_prefs_use_case(

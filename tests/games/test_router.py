@@ -175,7 +175,7 @@ async def test_get_game_detail_forwards_uid_and_game_id(
     )
 
     mock_get_game_detail_use_case.execute.assert_awaited_once_with(
-        "test-uid-123", "steam_570", platform=None, steam_app_id_hint=None
+        "test-uid-123", "steam_570", platform=None, steam_app_id_hint=None, country=None
     )
 
 

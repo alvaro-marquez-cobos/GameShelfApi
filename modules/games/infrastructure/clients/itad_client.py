@@ -83,7 +83,7 @@ class ItadClient(IItadClient):
         """
         return None
 
-    async def get_prices_for_game(self, itad_game_id: str, country: str = "US") -> list[Deal]:
+    async def get_prices_for_game(self, itad_game_id: str, country: str) -> list[Deal]:
         """Fetch current store deals for a game."""
         try:
             response = await self._http.post(
@@ -107,7 +107,7 @@ class ItadClient(IItadClient):
             return []
 
     async def get_prices_for_games_batch(
-        self, itad_game_ids: list[str], country: str = "US"
+        self, itad_game_ids: list[str], country: str
     ) -> dict[str, list[Deal]]:
         """Fetch current deals for multiple games in a single request."""
         result_map: dict[str, list[Deal]] = {gid: [] for gid in itad_game_ids}
@@ -129,7 +129,7 @@ class ItadClient(IItadClient):
             pass
         return result_map
 
-    async def get_historical_low(self, itad_game_id: str, country: str = "US") -> Deal | None:
+    async def get_historical_low(self, itad_game_id: str, country: str) -> Deal | None:
         """Fetch the all-time historical low price for a game."""
         try:
             response = await self._http.post(
