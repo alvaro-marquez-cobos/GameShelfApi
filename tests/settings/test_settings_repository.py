@@ -1,5 +1,7 @@
 """Tests for FirestoreSettingsRepository ITAD country methods."""
 
+from typing import Any
+
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -9,7 +11,7 @@ from modules.settings.infrastructure.repos.settings_repository import (
 )
 
 
-def _make_doc(data: dict | None) -> MagicMock:
+def _make_doc(data: dict[str, Any] | None) -> MagicMock:
     doc = MagicMock()
     doc.exists = data is not None
     doc.to_dict.return_value = data or {}
