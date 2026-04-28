@@ -9,6 +9,10 @@ from modules.games.domain.entities.game_detail import GameDetail
 from modules.games.domain.entities.itad import Deal
 from modules.games.domain.interfaces.repositories.i_game_repository import IGameRepository
 from modules.games.domain.interfaces.use_cases.get_game_detail import IGetGameDetailUseCase
+from modules.settings.domain.interfaces.repositories.i_settings_repository import (
+    ISettingsRepository,
+)
+from shared.config import get_settings
 from shared.domain.enums.platform import Platform
 from shared.domain.interfaces.hltb_client import IHltbClient
 from shared.domain.interfaces.i_library_reader import ILibraryReader
@@ -45,6 +49,7 @@ class GetGameDetailUseCase(IGetGameDetailUseCase):
         itad: IItadClient,
         wishlist_reader: IWishlistReader,
         library_reader: ILibraryReader,
+        settings_repo: ISettingsRepository | None = None,
     ) -> None:
         self._repo = repo
         self._steam_metadata = steam_metadata
@@ -53,6 +58,7 @@ class GetGameDetailUseCase(IGetGameDetailUseCase):
         self._itad = itad
         self._wishlist_reader = wishlist_reader
         self._library_reader = library_reader
+        self._settings_repo = settings_repo
 
     async def execute(
         self,
@@ -60,6 +66,7 @@ class GetGameDetailUseCase(IGetGameDetailUseCase):
         game_id: str,
         platform: Platform | None = None,
         steam_app_id_hint: int | None = None,
+        country: str | None = None,
     ) -> GameDetail:
         # ------------------------------------------------------------------
         # Phase 1 — Resolve title and Steam app ID from user's library first,
@@ -98,12 +105,15 @@ class GetGameDetailUseCase(IGetGameDetailUseCase):
         # ------------------------------------------------------------------
         # Phase 2 — Parallel enrichment (only if steam_app_id is resolved)
         # ------------------------------------------------------------------
+        effective_country = await self._resolve_country(uid, country)
         if steam_app_id is not None:
             results = await asyncio.gather(
                 self._steam_metadata.get_app_details(steam_app_id),
                 self._protondb.get_compatibility_rating(str(steam_app_id)),
                 self._hltb.get_game_duration(title),
-                self._get_itad_deals(steam_app_id, title),  # Pass title for fallback
+                self._get_itad_deals(
+                    steam_app_id, title, effective_country
+                ),  # Pass title for fallback
                 self._wishlist_reader.is_in_wishlist(uid, game_id),
                 return_exceptions=True,
             )
@@ -116,7 +126,7 @@ class GetGameDetailUseCase(IGetGameDetailUseCase):
             # Retry ITAD with real game name if Phase 2 used game_id as title
             # (non-library games have title=game_id before Steam resolves the name)
             if not deals and steam is not None and steam.name and steam.name != title:
-                deals = await self._get_itad_deals(steam_app_id, steam.name)
+                deals = await self._get_itad_deals(steam_app_id, steam.name, effective_country)
         else:
             steam = None
             protondb = None
@@ -165,7 +175,17 @@ class GetGameDetailUseCase(IGetGameDetailUseCase):
             is_in_library=library_game is not None,
         )
 
-    async def _get_itad_deals(self, steam_app_id: int, title: str) -> list[Deal]:
+    async def _resolve_country(self, uid: str, country: str | None) -> str:
+        """Resolve effective country from param or user settings."""
+        if country is not None:
+            return country
+        if self._settings_repo is not None:
+            user_country = await self._settings_repo.get_itad_country(uid)
+            if user_country is not None:
+                return user_country
+        return get_settings().itad_default_country
+
+    async def _get_itad_deals(self, steam_app_id: int, title: str, country: str) -> list[Deal]:
         """Resolve ITAD UUID from steam_app_id and fetch current deals.
 
         Uses lookup by Steam App ID first, falls back to direct title lookup
@@ -191,4 +211,4 @@ class GetGameDetailUseCase(IGetGameDetailUseCase):
         if itad_id is None:
             return []
 
-        return await self._itad.get_prices_for_game(itad_id)
+        return await self._itad.get_prices_for_game(itad_id, country)

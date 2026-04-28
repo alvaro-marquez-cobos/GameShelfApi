@@ -16,6 +16,7 @@ class IGetGameDetailUseCase(ABC):
         game_id: str,
         platform: Platform | None = None,
         steam_app_id_hint: int | None = None,
+        country: str | None = None,
     ) -> GameDetail:
         """Return enriched game detail for the given game.
 
@@ -26,6 +27,7 @@ class IGetGameDetailUseCase(ABC):
                 enrichment when the game is not in the user's library.
             steam_app_id_hint: Optional Steam app ID hint from the client
                 to short-circuit resolution when already known.
+            country: ISO 3166-1 alpha-2 country code for ITAD pricing.
 
         Returns:
             A ``GameDetail`` with as much enrichment as available.

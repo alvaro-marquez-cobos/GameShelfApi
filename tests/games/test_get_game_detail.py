@@ -436,7 +436,7 @@ async def test_itad_fallback_via_lookup_game_id(
     itad.lookup_game_id_by_steam_app_id.assert_awaited_once_with("570")
     itad.lookup_game_id.assert_awaited_once_with("Dota 2")
     itad.get_game_info.assert_awaited_once_with("fallback-uuid")
-    itad.get_prices_for_game.assert_awaited_once_with("fallback-uuid")
+    itad.get_prices_for_game.assert_awaited_once_with("fallback-uuid", "US")
 
 
 @pytest.mark.asyncio

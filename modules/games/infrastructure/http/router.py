@@ -31,12 +31,14 @@ async def get_game_detail(
     use_case: Annotated[IGetGameDetailUseCase, Depends(get_get_game_detail_use_case)],
     platform: Annotated[Platform | None, Query()] = None,
     steam_app_id: Annotated[int | None, Query()] = None,
+    country: Annotated[str | None, Query(min_length=2, max_length=2)] = None,
 ) -> GameDetailResponse:
     detail = await use_case.execute(
         current_user.uid,
         game_id,
         platform=platform,
         steam_app_id_hint=steam_app_id,
+        country=country,
     )
 
     proton_db = None
