@@ -14,6 +14,7 @@ def _game_detail(
     with_steam: bool = True,
     with_deals: bool = True,
     in_wishlist: bool = False,
+    in_library: bool = False,
 ) -> SimpleNamespace:
     protondb = (
         SimpleNamespace(tier="gold", trending_tier="gold", total=500) if with_proton else None
@@ -67,6 +68,7 @@ def _game_detail(
         steam=steam,
         deals=deals,
         is_in_wishlist=in_wishlist,
+        is_in_library=in_library,
     )
 
 

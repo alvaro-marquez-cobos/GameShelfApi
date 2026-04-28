@@ -13,6 +13,8 @@ from modules.library.domain.interfaces.repositories.i_library_repository import 
 from shared.domain.entities.library_game import LibraryGame
 from shared.domain.enums.platform import Platform
 from shared.domain.interfaces.i_game_reader import IGameReader
+from shared.infrastructure.cache.decorators import cached
+from shared.infrastructure.cache.keys import user_library_key
 from shared.infrastructure.database.firestore import get_firestore
 from shared.infrastructure.persistence.base_repository import BaseFirestoreRepository
 
@@ -26,6 +28,11 @@ class FirestoreLibraryRepository(BaseFirestoreRepository, ILibraryRepository, IG
     def __init__(self) -> None:
         super().__init__(client=get_firestore())
 
+    @cached(
+        ttl=120,
+        key_builder=lambda self, uid: user_library_key(uid),
+        deserializer=lambda data: [_doc_to_library_game(item) for item in data],
+    )
     async def get_games(self, uid: str) -> list[LibraryGame]:
         docs = await self.get_subcollection(_COLLECTION, uid, _SUBCOLLECTION)
         return [_doc_to_library_game(doc) for doc in docs]
@@ -53,6 +60,14 @@ class FirestoreLibraryRepository(BaseFirestoreRepository, ILibraryRepository, IG
             for g in games
         ]
         await asyncio.gather(*tasks)
+
+        try:
+            from shared.infrastructure.cache.redis_client import get_redis
+
+            redis = get_redis()
+            await redis.delete(user_library_key(uid))
+        except Exception:
+            pass
 
     # IGameReader
     async def get_owned_game_ids(self, uid: str) -> set[str]:

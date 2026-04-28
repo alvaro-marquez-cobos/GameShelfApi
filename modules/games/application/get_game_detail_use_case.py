@@ -103,7 +103,7 @@ class GetGameDetailUseCase(IGetGameDetailUseCase):
                 self._steam_metadata.get_app_details(steam_app_id),
                 self._protondb.get_compatibility_rating(str(steam_app_id)),
                 self._hltb.get_game_duration(title),
-                self._get_itad_deals(steam_app_id),
+                self._get_itad_deals(steam_app_id, title),  # Pass title for fallback
                 self._wishlist_reader.is_in_wishlist(uid, game_id),
                 return_exceptions=True,
             )
@@ -112,6 +112,11 @@ class GetGameDetailUseCase(IGetGameDetailUseCase):
             hltb = _ok(results[2], None)
             deals: list[Deal] = _ok(results[3], [])
             is_in_wishlist: bool = _ok(results[4], False)
+
+            # Retry ITAD with real game name if Phase 2 used game_id as title
+            # (non-library games have title=game_id before Steam resolves the name)
+            if not deals and steam is not None and steam.name and steam.name != title:
+                deals = await self._get_itad_deals(steam_app_id, steam.name)
         else:
             steam = None
             protondb = None
@@ -157,11 +162,33 @@ class GetGameDetailUseCase(IGetGameDetailUseCase):
             hltb=hltb,
             deals=deals,
             is_in_wishlist=is_in_wishlist,
+            is_in_library=library_game is not None,
         )
 
-    async def _get_itad_deals(self, steam_app_id: int) -> list[Deal]:
-        """Resolve ITAD UUID from steam_app_id and fetch current deals."""
+    async def _get_itad_deals(self, steam_app_id: int, title: str) -> list[Deal]:
+        """Resolve ITAD UUID from steam_app_id and fetch current deals.
+
+        Uses lookup by Steam App ID first, falls back to direct title lookup
+        with verification if that fails.
+        """
         itad_id = await self._itad.lookup_game_id_by_steam_app_id(str(steam_app_id))
+
+        if itad_id is None:
+            # Fallback: direct lookup by title (more reliable than search + enrich)
+            itad_id = await self._itad.lookup_game_id(title)
+            if itad_id is not None:
+                # Discard only if ITAD confirms a different steam_app_id (wrong game).
+                # If info is None or steam_app_id is unlinked, give the UUID
+                # the benefit of the doubt.
+                info = await self._itad.get_game_info(itad_id)
+                if (
+                    info is not None
+                    and info.steam_app_id is not None
+                    and info.steam_app_id != steam_app_id
+                ):
+                    itad_id = None
+
         if itad_id is None:
             return []
+
         return await self._itad.get_prices_for_game(itad_id)

@@ -158,6 +158,7 @@ async def test_steam_app_id_extracted_from_game_id(
     repo.get_game.return_value = None  # not in metadata cache
     steam_metadata.get_app_details.return_value = _steam_details()
     itad.lookup_game_id_by_steam_app_id.return_value = None
+    itad.lookup_game_id.return_value = None
     wishlist_reader.is_in_wishlist.return_value = False
 
     result = await use_case.execute("uid_abc", "steam_570")
@@ -186,6 +187,7 @@ async def test_title_and_cover_fallback_for_non_library_games(
         header_image="https://cdn.cloudflare.steamstatic.com/steam/apps/570/header.jpg",
     )
     itad.lookup_game_id_by_steam_app_id.return_value = None
+    itad.lookup_game_id.return_value = None
     wishlist_reader.is_in_wishlist.return_value = False
 
     result = await use_case.execute("uid_abc", "steam_570")
@@ -218,6 +220,7 @@ async def test_steam_app_id_resolved_via_search_store(
         app_id=1091500, name="Cyberpunk 2077"
     )
     itad.lookup_game_id_by_steam_app_id.return_value = None
+    itad.lookup_game_id.return_value = None
     wishlist_reader.is_in_wishlist.return_value = False
 
     result = await use_case.execute("uid_abc", "gog_12345")
@@ -249,6 +252,7 @@ async def test_protondb_failure_returns_none_field(
     protondb.get_compatibility_rating.side_effect = Exception("ProtonDB unreachable")
     hltb.get_game_duration.return_value = None
     itad.lookup_game_id_by_steam_app_id.return_value = None
+    itad.lookup_game_id.return_value = None
     wishlist_reader.is_in_wishlist.return_value = False
 
     result = await use_case.execute("uid_abc", "steam_570")
@@ -382,3 +386,139 @@ async def test_steam_app_id_hint_with_platform(
     assert result.steam_app_id == 570
     assert result.platform == Platform.EPIC
     assert result.steam is not None
+
+
+# ---------------------------------------------------------------------------
+# ITAD fallback — lookup_game_id + get_game_info verification
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_itad_fallback_via_lookup_game_id(
+    use_case: GetGameDetailUseCase,
+    repo: AsyncMock,
+    steam_metadata: AsyncMock,
+    protondb: AsyncMock,
+    hltb: AsyncMock,
+    itad: AsyncMock,
+    wishlist_reader: AsyncMock,
+    library_reader: AsyncMock,
+) -> None:
+    """When lookup_game_id_by_steam_app_id fails, fallback uses
+    lookup_game_id + get_game_info verification.
+    """
+    from modules.games.domain.entities.itad import ItadGameInfo
+
+    library_reader.get_game.return_value = _library_game()
+    repo.get_game.return_value = {"game_id": "steam_570", "steam_app_id": 570}
+    steam_metadata.get_app_details.return_value = _steam_details()
+    protondb.get_compatibility_rating.return_value = ProtonDbRating(
+        tier="gold", trending_tier="gold", total=500
+    )
+    hltb.get_game_duration.return_value = HltbResult(
+        main_story=30.0, main_extra=50.0, completionist=100.0
+    )
+
+    # Primary lookup fails (endpoint deprecated / no perms)
+    itad.lookup_game_id_by_steam_app_id.return_value = None
+    # Fallback direct lookup succeeds with correct UUID
+    itad.lookup_game_id.return_value = "fallback-uuid"
+    # get_game_info confirms matching steam_app_id
+    itad.get_game_info.return_value = ItadGameInfo(
+        id="fallback-uuid", title="Dota 2", steam_app_id=570, cover_url=""
+    )
+    itad.get_prices_for_game.return_value = [_deal()]
+    wishlist_reader.is_in_wishlist.return_value = False
+
+    result = await use_case.execute("uid_abc", "steam_570")
+
+    assert len(result.deals) == 1
+    itad.lookup_game_id_by_steam_app_id.assert_awaited_once_with("570")
+    itad.lookup_game_id.assert_awaited_once_with("Dota 2")
+    itad.get_game_info.assert_awaited_once_with("fallback-uuid")
+    itad.get_prices_for_game.assert_awaited_once_with("fallback-uuid")
+
+
+@pytest.mark.asyncio
+async def test_itad_fallback_discards_mismatched_steam_app_id(
+    use_case: GetGameDetailUseCase,
+    repo: AsyncMock,
+    steam_metadata: AsyncMock,
+    itad: AsyncMock,
+    wishlist_reader: AsyncMock,
+    library_reader: AsyncMock,
+) -> None:
+    """When lookup_game_id returns a UUID but get_game_info has
+    different steam_app_id, discard it.
+    """
+    from modules.games.domain.entities.itad import ItadGameInfo
+
+    library_reader.get_game.return_value = _library_game()
+    repo.get_game.return_value = {"game_id": "steam_570", "steam_app_id": 570}
+    steam_metadata.get_app_details.return_value = _steam_details()
+
+    itad.lookup_game_id_by_steam_app_id.return_value = None
+    itad.lookup_game_id.return_value = "wrong-game-uuid"
+    # get_game_info returns a different game (e.g. same name, different app)
+    itad.get_game_info.return_value = ItadGameInfo(
+        id="wrong-game-uuid", title="Dota 2", steam_app_id=999999, cover_url=""
+    )
+    wishlist_reader.is_in_wishlist.return_value = False
+
+    result = await use_case.execute("uid_abc", "steam_570")
+
+    assert result.deals == []
+    itad.get_prices_for_game.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_itad_retries_with_steam_name_for_non_library_games(
+    use_case: GetGameDetailUseCase,
+    repo: AsyncMock,
+    steam_metadata: AsyncMock,
+    itad: AsyncMock,
+    wishlist_reader: AsyncMock,
+    library_reader: AsyncMock,
+) -> None:
+    """When title=game_id (non-library game), ITAD retries with the real Steam name after gather."""
+    library_reader.get_game.return_value = None  # not in library — title defaults to game_id
+    repo.get_game.return_value = None
+    steam_metadata.get_app_details.return_value = _steam_details()  # name="Dota 2"
+
+    # First attempt (title="steam_570") finds nothing
+    itad.lookup_game_id_by_steam_app_id.return_value = None
+    itad.lookup_game_id.side_effect = [None, "itad-uuid"]  # first call fails, retry succeeds
+    itad.get_game_info.return_value = None  # skip verification on retry path
+    itad.get_prices_for_game.return_value = [_deal()]
+    wishlist_reader.is_in_wishlist.return_value = False
+
+    result = await use_case.execute("uid_abc", "steam_570")
+
+    assert len(result.deals) == 1
+    # Second lookup_game_id call must use the real Steam name
+    assert itad.lookup_game_id.call_args_list[-1].args[0] == "Dota 2"
+
+
+@pytest.mark.asyncio
+async def test_itad_fallback_lookup_game_id_returns_none(
+    use_case: GetGameDetailUseCase,
+    repo: AsyncMock,
+    steam_metadata: AsyncMock,
+    itad: AsyncMock,
+    wishlist_reader: AsyncMock,
+    library_reader: AsyncMock,
+) -> None:
+    """When both lookups return None, get_prices_for_game is never called."""
+    library_reader.get_game.return_value = _library_game()
+    repo.get_game.return_value = {"game_id": "steam_570", "steam_app_id": 570}
+    steam_metadata.get_app_details.return_value = _steam_details()
+
+    itad.lookup_game_id_by_steam_app_id.return_value = None
+    itad.lookup_game_id.return_value = None
+    wishlist_reader.is_in_wishlist.return_value = False
+
+    result = await use_case.execute("uid_abc", "steam_570")
+
+    assert result.deals == []
+    itad.get_game_info.assert_not_awaited()
+    itad.get_prices_for_game.assert_not_awaited()

@@ -4,8 +4,8 @@ Implements ``IItadClient`` using the ITAD v2 official API.
 Authentication uses an API key passed as the ``key`` query parameter.
 
 Recommended lookup flow for deals:
-  1. ``lookup_game_id_by_steam_app_id()`` — if the game has a Steam app ID.
-  2. ``lookup_game_id()`` — title fallback.
+  1. ``lookup_game_id_by_steam_app_id()`` — if available (may be deprecated).
+  2. ``search_games()`` — title search to find UUID with matching Steam App ID (fallback).
   3. ``get_prices_for_game()`` — with the ITAD UUID from step 1 or 2.
 
 ``get_game_info()`` results are cached for 1 hour. All other methods return
@@ -43,53 +43,45 @@ class ItadClient(IItadClient):
     async def lookup_game_id(self, title: str) -> str | None:
         """Resolve a game title to an ITAD UUID."""
         try:
-            response = await self._http.post(
+            response = await self._http.get(
                 "/games/lookup/v1",
-                json=[title],
-                params=self._auth,
+                params={**self._auth, "title": title},
             )
-            if response.status_code != 200:
-                return None
-            results = response.json()
-            return str(results[0]["id"]) if results and results[0].get("id") else None
-        except Exception:
-            return None
-
-    async def lookup_game_ids_batch(self, titles: list[str]) -> dict[str, str | None]:
-        """Resolve multiple titles to ITAD UUIDs in a single request."""
-        result_map: dict[str, str | None] = {t: None for t in titles}
-        if not titles:
-            return result_map
-        try:
-            response = await self._http.post(
-                "/games/lookup/v1",
-                json=titles,
-                params=self._auth,
-            )
-            if response.status_code != 200:
-                return result_map
-            entries = response.json() or []
-            for title, entry in zip(titles, entries, strict=False):
-                result_map[title] = str(entry["id"]) if entry and entry.get("id") else None
-        except Exception:
-            pass
-        return result_map
-
-    async def lookup_game_id_by_steam_app_id(self, steam_app_id: str) -> str | None:
-        """Resolve a Steam app ID to an ITAD UUID."""
-        try:
-            response = await self._http.post(
-                "/games/lookup/id/shop/v1",
-                json={"shop": "steam", "ids": [f"app/{steam_app_id}"]},
-                params=self._auth,
+            logger.debug(
+                "ITAD lookup_game_id title=%r status=%s body=%s",
+                title,
+                response.status_code,
+                response.text[:500],
             )
             if response.status_code != 200:
                 return None
             data = response.json() or {}
-            value = data.get(f"app/{steam_app_id}")
-            return str(value) if value else None
+            if data.get("found") and data.get("game", {}).get("id"):
+                return str(data["game"]["id"])
+            return None
         except Exception:
             return None
+
+    async def lookup_game_ids_batch(self, titles: list[str]) -> dict[str, str | None]:
+        """Resolve multiple titles to ITAD UUIDs, one request per title."""
+        result_map: dict[str, str | None] = {t: None for t in titles}
+        if not titles:
+            return result_map
+        import asyncio as _asyncio
+
+        lookups = [self.lookup_game_id(t) for t in titles]
+        results = await _asyncio.gather(*lookups, return_exceptions=True)
+        for title, res in zip(titles, results, strict=False):
+            result_map[title] = res if isinstance(res, str) else None
+        return result_map
+
+    async def lookup_game_id_by_steam_app_id(self, steam_app_id: str) -> str | None:
+        """Resolve a Steam app ID to an ITAD UUID.
+
+        The /games/lookup/id/shop/v1 endpoint no longer exists in the ITAD API.
+        This method always returns None — callers should use lookup_game_id(title) instead.
+        """
+        return None
 
     async def get_prices_for_game(self, itad_game_id: str, country: str = "US") -> list[Deal]:
         """Fetch current store deals for a game."""
@@ -99,10 +91,17 @@ class ItadClient(IItadClient):
                 json=[itad_game_id],
                 params={**self._auth, "country": country},
             )
+            logger.debug(
+                "ITAD get_prices_for_game id=%s status=%s body=%s",
+                itad_game_id,
+                response.status_code,
+                response.text[:500],
+            )
             if response.status_code != 200:
                 return []
             results = response.json() or []
             deals_raw = results[0].get("deals", []) if results else []
+            logger.debug("ITAD get_prices_for_game id=%s -> %d deals", itad_game_id, len(deals_raw))
             return [self._map_deal(d, i) for i, d in enumerate(deals_raw)]
         except Exception:
             return []
