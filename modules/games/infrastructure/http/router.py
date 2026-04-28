@@ -97,6 +97,7 @@ async def get_game_detail(
         steam_metadata=steam_metadata,
         deals=deals,
         is_in_wishlist=detail.is_in_wishlist,
+        is_in_library=detail.is_in_library,
     )
 
 

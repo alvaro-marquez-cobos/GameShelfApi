@@ -40,8 +40,8 @@ def client() -> ItadClient:
 @pytest.mark.asyncio
 async def test_lookup_game_id_returns_id(client: ItadClient) -> None:
     with respx.mock(base_url=_BASE) as mock:
-        mock.post("/games/lookup/v1").mock(
-            return_value=httpx.Response(200, json=[{"id": _GAME_ID}])
+        mock.get("/games/lookup/v1").mock(
+            return_value=httpx.Response(200, json={"found": True, "game": {"id": _GAME_ID}})
         )
         result = await client.lookup_game_id("Elden Ring")
 
@@ -51,7 +51,7 @@ async def test_lookup_game_id_returns_id(client: ItadClient) -> None:
 @pytest.mark.asyncio
 async def test_lookup_game_id_returns_none_on_empty_response(client: ItadClient) -> None:
     with respx.mock(base_url=_BASE) as mock:
-        mock.post("/games/lookup/v1").mock(return_value=httpx.Response(200, json=[]))
+        mock.get("/games/lookup/v1").mock(return_value=httpx.Response(200, json={"found": False}))
         result = await client.lookup_game_id("Unknown Game")
 
     assert result is None
@@ -60,7 +60,7 @@ async def test_lookup_game_id_returns_none_on_empty_response(client: ItadClient)
 @pytest.mark.asyncio
 async def test_lookup_game_id_returns_none_on_error(client: ItadClient) -> None:
     with respx.mock(base_url=_BASE) as mock:
-        mock.post("/games/lookup/v1").mock(return_value=httpx.Response(500))
+        mock.get("/games/lookup/v1").mock(return_value=httpx.Response(500))
         result = await client.lookup_game_id("Some Game")
 
     assert result is None
@@ -74,9 +74,13 @@ async def test_lookup_game_id_returns_none_on_error(client: ItadClient) -> None:
 @pytest.mark.asyncio
 async def test_lookup_game_ids_batch_maps_titles(client: ItadClient) -> None:
     titles = ["Elden Ring", "Dark Souls"]
-    ids = [{"id": "id-1"}, {"id": "id-2"}]
     with respx.mock(base_url=_BASE) as mock:
-        mock.post("/games/lookup/v1").mock(return_value=httpx.Response(200, json=ids))
+        mock.get("/games/lookup/v1", params={"title": "Elden Ring"}).mock(
+            return_value=httpx.Response(200, json={"found": True, "game": {"id": "id-1"}})
+        )
+        mock.get("/games/lookup/v1", params={"title": "Dark Souls"}).mock(
+            return_value=httpx.Response(200, json={"found": True, "game": {"id": "id-2"}})
+        )
         result = await client.lookup_game_ids_batch(titles)
 
     assert result["Elden Ring"] == "id-1"
@@ -97,24 +101,9 @@ async def test_lookup_game_ids_batch_returns_empty_on_empty_input(
 
 
 @pytest.mark.asyncio
-async def test_lookup_by_steam_app_id_returns_itad_id(client: ItadClient) -> None:
-    with respx.mock(base_url=_BASE) as mock:
-        mock.post("/games/lookup/id/shop/v1").mock(
-            return_value=httpx.Response(200, json={f"app/{_STEAM_APP_ID}": _GAME_ID})
-        )
-        result = await client.lookup_game_id_by_steam_app_id(_STEAM_APP_ID)
-
-    assert result == _GAME_ID
-
-
-@pytest.mark.asyncio
-async def test_lookup_by_steam_app_id_returns_none_when_missing(
-    client: ItadClient,
-) -> None:
-    with respx.mock(base_url=_BASE) as mock:
-        mock.post("/games/lookup/id/shop/v1").mock(return_value=httpx.Response(200, json={}))
-        result = await client.lookup_game_id_by_steam_app_id(_STEAM_APP_ID)
-
+async def test_lookup_by_steam_app_id_returns_none(client: ItadClient) -> None:
+    # The /games/lookup/id/shop/v1 endpoint no longer exists in the ITAD API.
+    result = await client.lookup_game_id_by_steam_app_id(_STEAM_APP_ID)
     assert result is None
 
 

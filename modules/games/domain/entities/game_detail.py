@@ -44,6 +44,7 @@ class GameDetail:
     hltb: HltbResult | None = None
     deals: list[Deal] = field(default_factory=list)
     is_in_wishlist: bool = False
+    is_in_library: bool = False
 
 
 @dataclass

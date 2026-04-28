@@ -72,6 +72,7 @@ class GameDetailResponse(BaseModel):
     steam_metadata: SteamMetadataResponse | None = Field(default=None, alias="steamMetadata")
     deals: list[DealResponse]
     is_in_wishlist: bool = Field(alias="isInWishlist")
+    is_in_library: bool = Field(alias="isInLibrary")
 
 
 class DlcResponse(BaseModel):
