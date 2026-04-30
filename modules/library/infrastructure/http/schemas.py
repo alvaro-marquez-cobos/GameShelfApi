@@ -15,7 +15,7 @@ class LibraryGameResponse(BaseModel):
     title: str
     platform: Platform
     cover_url: str | None = Field(default=None, alias="coverUrl")
-    playtime_minutes: int = Field(default=0, alias="playtimeMinutes")
+    playtime_minutes: int = Field(default=0, alias="playtime")
     last_played: str | None = Field(default=None, alias="lastPlayed")
     steam_app_id: int | None = Field(default=None, alias="steamAppId")
     game_type: str | None = Field(default=None, alias="gameType")
