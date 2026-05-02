@@ -4,10 +4,11 @@ from abc import ABC, abstractmethod
 
 from modules.library.domain.entities.library_game import LibraryGame
 from modules.library.domain.enums.library import LibrarySortBy, LibraryTab
+from shared.domain.enums.platform import Platform
 
 
 class IGetLibraryUseCase(ABC):
-    """Contract for retrieving and filtering the user's game library."""
+    """Contract for retrieving and filtering the user's library."""
 
     @abstractmethod
     async def execute(
@@ -18,6 +19,7 @@ class IGetLibraryUseCase(ABC):
         search: str = "",
         offset: int = 0,
         limit: int = 20,
-    ) -> tuple[list[LibraryGame], int]:
-        """Return a filtered/sorted page of games and the total count."""
+        platforms: list[Platform] | None = None,
+    ) -> tuple[list[LibraryGame], int, list[list[Platform]]]:
+        """Return a filtered/sorted page of games, total count, and platform lists."""
         ...

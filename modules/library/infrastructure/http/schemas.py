@@ -22,12 +22,21 @@ class LibraryGameResponse(BaseModel):
     parent_game_id: str | None = Field(default=None, alias="parentGameId")
 
 
+class MergedLibraryGameResponse(BaseModel):
+    """A merged multi-platform game entry."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    game: LibraryGameResponse
+    platforms: list[Platform]
+
+
 class GetLibraryResponse(BaseModel):
     """Paginated library response."""
 
     model_config = ConfigDict(populate_by_name=True)
 
-    games: list[LibraryGameResponse]
+    games: list[MergedLibraryGameResponse]
     total: int
     has_more: bool = Field(alias="hasMore")
 

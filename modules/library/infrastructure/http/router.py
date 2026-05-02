@@ -18,11 +18,13 @@ from modules.library.infrastructure.http.schemas import (
     GetLibraryResponse,
     LibraryGameResponse,
     LibraryStatsResponse,
+    MergedLibraryGameResponse,
     SyncLibraryRequest,
     SyncLibraryResponse,
 )
 from shared.domain.entities.library_game import LibraryGame
 from shared.domain.entities.user import AuthenticatedUser
+from shared.domain.enums.platform import Platform
 
 router = APIRouter()
 
@@ -41,6 +43,13 @@ def _to_game_response(game: LibraryGame) -> LibraryGameResponse:
     )
 
 
+def _to_merged_response(game: LibraryGame, platforms: list[Platform]) -> MergedLibraryGameResponse:
+    return MergedLibraryGameResponse(
+        game=_to_game_response(game),
+        platforms=platforms,
+    )
+
+
 @router.get("", response_model=GetLibraryResponse)
 async def get_library(
     current_user: Annotated[AuthenticatedUser, Depends(get_current_user)],
@@ -50,18 +59,21 @@ async def get_library(
     search: Annotated[str, Query()] = "",
     page: Annotated[int, Query(ge=1)] = 1,
     page_size: Annotated[int, Query(ge=1, le=500)] = 200,
+    platforms: Annotated[list[Platform] | None, Query()] = None,
 ) -> GetLibraryResponse:
     offset = (page - 1) * page_size
-    games, total = await use_case.execute(
+    games, total, platforms_list = await use_case.execute(
         uid=current_user.uid,
         tab=tab,
         sort_by=sort,
         search=search,
         offset=offset,
         limit=page_size,
+        platforms=platforms,
     )
+    merged_games = [_to_merged_response(game, platforms_list[i]) for i, game in enumerate(games)]
     return GetLibraryResponse(
-        games=[_to_game_response(game) for game in games],
+        games=merged_games,
         total=total,
         has_more=(offset + len(games)) < total,
     )
