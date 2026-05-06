@@ -39,6 +39,7 @@ from modules.library.domain.interfaces.use_cases.sync_library import ISyncLibrar
 from modules.library.infrastructure.repos.library_repository import (
     FirestoreLibraryRepository,
 )
+from modules.notifications.infrastructure.services.fcm_service import FcmService
 from modules.platforms.application.get_linked_platforms_use_case import (
     GetLinkedPlatformsUseCase,
 )
@@ -484,6 +485,16 @@ def get_update_notification_prefs_use_case(
     repo: Annotated[ISettingsRepository, Depends(get_settings_repository)],
 ) -> IUpdateNotificationPrefsUseCase:
     return UpdateNotificationPrefsUseCase(repo)
+
+
+# ---------------------------------------------------------------------------
+# Notifications infrastructure
+# ---------------------------------------------------------------------------
+
+
+def get_fcm_service() -> FcmService:
+    """Return the Firebase Cloud Messaging service instance."""
+    return FcmService()
 
 
 # ---------------------------------------------------------------------------

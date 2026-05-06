@@ -43,15 +43,22 @@ def mock_update_notification_prefs_use_case() -> AsyncMock:
 
 
 @pytest.fixture
+def mock_settings_repository() -> AsyncMock:
+    return AsyncMock()
+
+
+@pytest.fixture
 async def async_client(
     mock_firebase_auth: AsyncMock,
     mock_token_blacklist: AsyncMock,
     mock_get_notification_prefs_use_case: AsyncMock,
     mock_update_notification_prefs_use_case: AsyncMock,
+    mock_settings_repository: AsyncMock,
 ) -> AsyncGenerator[AsyncClient, None]:
     from composition.dependencies import (
         get_firebase_auth_provider,
         get_get_notification_prefs_use_case,
+        get_settings_repository,
         get_token_blacklist,
         get_update_notification_prefs_use_case,
     )
@@ -65,6 +72,7 @@ async def async_client(
     app.dependency_overrides[get_update_notification_prefs_use_case] = lambda: (
         mock_update_notification_prefs_use_case
     )
+    app.dependency_overrides[get_settings_repository] = lambda: mock_settings_repository
 
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         yield client

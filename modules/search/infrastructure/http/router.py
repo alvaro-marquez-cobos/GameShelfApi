@@ -26,6 +26,7 @@ async def search_games(
             title=item.title,
             cover_url=item.cover_url,
             steam_app_id=item.steam_app_id,
+            game_type=item.game_type,
             is_owned=item.is_owned,
             owned_platforms=item.owned_platforms,
             is_in_wishlist=item.is_in_wishlist,

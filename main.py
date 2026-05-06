@@ -43,6 +43,13 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             get_firebase_app()
         except Exception:
             logger.exception("Failed to initialize Firebase during startup")
+        try:
+            from modules.notifications.application.scheduler import start_scheduler
+
+            scheduler = start_scheduler(app)
+            app.state.deal_checker_scheduler = scheduler
+        except Exception:
+            logger.exception("Failed to start deal checker scheduler")
     yield
     if not settings.is_testing:
         try:
@@ -51,6 +58,12 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             await close_redis()
         except Exception:
             logger.exception("Failed to close Redis during shutdown")
+        try:
+            scheduler = getattr(app.state, "deal_checker_scheduler", None)
+            if scheduler is not None:
+                scheduler.shutdown(wait=False)
+        except Exception:
+            logger.exception("Failed to shut down deal checker scheduler")
 
 
 def create_app() -> FastAPI:

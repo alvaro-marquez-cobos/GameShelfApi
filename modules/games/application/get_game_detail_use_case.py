@@ -72,27 +72,76 @@ class GetGameDetailUseCase(IGetGameDetailUseCase):
         # Phase 1 — Resolve title and Steam app ID from user's library first,
         # then fall back to the shared games metadata collection.
         # ------------------------------------------------------------------
+        logger.debug(
+            "GameDetail resolve: input game_id=%s steam_app_id_hint=%s uid=%s",
+            game_id,
+            steam_app_id_hint,
+            uid,
+        )
+
         library_game = await self._library_reader.get_game(uid, game_id)
         title = library_game.title if library_game and library_game.title else game_id
         steam_app_id: int | None = library_game.steam_app_id if library_game else None
 
+        logger.debug(
+            "GameDetail resolve: library_lookup=%s resolved_title=%s steam_app_id=%s",
+            library_game is not None,
+            title,
+            steam_app_id,
+        )
+
         if steam_app_id is None and steam_app_id_hint is not None:
             steam_app_id = steam_app_id_hint
+            logger.debug("GameDetail resolve: used steam_app_id_hint=%s", steam_app_id)
 
         if steam_app_id is None:
             game_doc = await self._repo.get_game(game_id)
             if game_doc:
                 steam_app_id = game_doc.get("steam_app_id")
 
+            logger.debug(
+                "GameDetail resolve: games_collection_found=%s steam_app_id=%s",
+                game_doc is not None,
+                steam_app_id,
+            )
+
         if steam_app_id is None and game_id.startswith("steam_"):
             # Try to extract from deterministic game_id (e.g. "steam_570")
             with contextlib.suppress(ValueError):
                 steam_app_id = int(game_id.split("_", 1)[1])
+            logger.debug("GameDetail resolve: steam_prefix_parsed=%s", steam_app_id)
+
+        if library_game is None and not game_id.startswith("steam_"):
+            # game_id may be an ITAD UUID — look it up to get the real title and steam_app_id.
+            # This fixes the case where a search result (which uses ITAD UUIDs as IDs) is opened
+            # and the game is not in the user's library, causing title to default to the raw UUID.
+            # Runs even when steam_app_id was already resolved from a hint (e.g. Fallout: New Vegas)
+            # so that title is always correct, not just when steam_app_id is unknown.
+            with contextlib.suppress(Exception):
+                itad_info = await self._itad.get_game_info(game_id)
+                if itad_info is not None:
+                    title = itad_info.title
+                    if steam_app_id is None and itad_info.steam_app_id is not None:
+                        steam_app_id = itad_info.steam_app_id
+                    logger.debug(
+                        "GameDetail resolve: itad_lookup title=%s steam_app_id=%s",
+                        title,
+                        steam_app_id,
+                    )
 
         if steam_app_id is None:
             # Fall back to Steam Store search by title
+            logger.info("GameDetail fallback: searching Steam store with title='%s'", title)
             try:
                 steam_app_id = await self._steam_metadata.search_store(title)
+                if steam_app_id:
+                    logger.info("GameDetail resolve: steam_store_success app_id=%s", steam_app_id)
+                else:
+                    logger.warning(
+                        "GameDetail FAILED: Steam store returned None for title='%s' game_id=%s",
+                        title,
+                        game_id,
+                    )
             except Exception:
                 logger.warning("Steam store search failed for '%s'", title)
 

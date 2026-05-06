@@ -13,6 +13,7 @@ live data on every call to ensure price accuracy.
 """
 
 import logging
+import re
 from typing import Any
 
 from modules.games.domain.entities.itad import Deal, ItadGameInfo, ItadSearchResult
@@ -155,12 +156,26 @@ class ItadClient(IItadClient):
         except Exception:
             return None
 
+    @staticmethod
+    def _sanitize_query(query: str) -> str:
+        """Remove trademark symbols, registered symbols, and superscript characters."""
+        cleaned = re.sub(r"[™®\uFE0F]", "", query)
+        cleaned = re.sub(
+            r"[\u00B9\u2070\u2071\u2074-\u2079\u2080-\u2089"
+            r"\u207A\u207B\u207C\u207D\u207E"
+            r"\u207F]",
+            "",
+            cleaned,
+        )
+        return re.sub(r"\s+", " ", cleaned).strip()
+
     async def search_games(self, query: str) -> list[ItadSearchResult]:
         """Search for games by title and enrich the top 5 with Steam app IDs."""
         try:
+            sanitized = self._sanitize_query(query)
             response = await self._http.get(
                 "/games/search/v1",
-                params={**self._auth, "title": query, "limit": 20},
+                params={**self._auth, "title": sanitized, "limit": 20},
             )
             if response.status_code != 200:
                 return []
@@ -176,6 +191,7 @@ class ItadClient(IItadClient):
                         or ""
                     ),
                     steam_app_id=None,
+                    game_type=r.get("type"),
                 )
                 for r in raw_results
             ]
@@ -193,6 +209,7 @@ class ItadClient(IItadClient):
                             title=r.title,
                             cover_url=r.cover_url,
                             steam_app_id=info.steam_app_id,
+                            game_type=r.game_type,
                         )
                     )
                 else:
