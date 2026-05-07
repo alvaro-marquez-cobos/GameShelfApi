@@ -8,7 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field
 class NotificationPrefsResponse(BaseModel):
     """Current notification preferences."""
 
-    model_config = ConfigDict(populate_by_name=True, by_alias=True)
+    model_config = ConfigDict(populate_by_name=True, serialize_by_alias=True)
 
     deals_enabled: bool = Field(alias="dealsEnabled")
 

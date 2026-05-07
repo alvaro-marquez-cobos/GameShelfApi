@@ -16,8 +16,6 @@ import os
 from datetime import UTC, datetime
 from typing import Any
 
-from shared.domain.interfaces.itad_client import IItadClient
-
 from modules.notifications.domain.entities.push_result import PushPayload
 from modules.notifications.infrastructure.services.fcm_service import FcmService
 from modules.settings.domain.interfaces.repositories.i_settings_repository import (
@@ -26,6 +24,7 @@ from modules.settings.domain.interfaces.repositories.i_settings_repository impor
 from modules.wishlist.domain.interfaces.repositories.i_wishlist_repository import (
     IWishlistRepository,
 )
+from shared.domain.interfaces.itad_client import IItadClient
 
 logger = logging.getLogger(__name__)
 

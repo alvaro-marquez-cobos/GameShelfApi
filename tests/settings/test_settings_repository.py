@@ -147,7 +147,8 @@ async def test_delete_all_does_not_remove_country(
     uid_doc = mock_firestore.collection.return_value.document.return_value
     settings_ref = uid_doc.collection.return_value
 
-    repo._db.collection.return_value.document.return_value.collection.return_value.document.return_value.delete = AsyncMock()
+    doc_ref = repo._db.collection.return_value.document.return_value
+    doc_ref.collection.return_value.document.return_value.delete = AsyncMock()
     # push token cleanup query returns no docs
     mock_firestore.collection.return_value.where.return_value.get = AsyncMock(return_value=[])
 
@@ -162,7 +163,8 @@ async def test_delete_all_removes_push_tokens(
     repo: FirestoreSettingsRepository,
     mock_firestore: MagicMock,
 ) -> None:
-    repo._db.collection.return_value.document.return_value.collection.return_value.document.return_value.delete = AsyncMock()
+    doc_ref = repo._db.collection.return_value.document.return_value
+    doc_ref.collection.return_value.document.return_value.delete = AsyncMock()
 
     token_doc = MagicMock()
     token_doc.reference.delete = AsyncMock()
@@ -208,7 +210,7 @@ async def test_register_push_token_deletes_stale_tokens(
         return_value=[stale]
     )
 
-    token_id = await repo.register_push_token("uid-abc", "ExponentPushToken[xxx]", "ios")
+    await repo.register_push_token("uid-abc", "ExponentPushToken[xxx]", "ios")
     # stale doc has a different id so it should be deleted
     stale.id = "old_token_id"
 

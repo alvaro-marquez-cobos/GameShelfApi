@@ -96,11 +96,7 @@ class FirestoreSettingsRepository(BaseFirestoreRepository, ISettingsRepository):
 
     async def remove_all_push_tokens(self, uid: str) -> None:
         try:
-            docs = (
-                await self._db.collection(_PUSH_TOKENS_COLLECTION)
-                .where("uid", "==", uid)
-                .get()
-            )
+            docs = await self._db.collection(_PUSH_TOKENS_COLLECTION).where("uid", "==", uid).get()
             for doc in docs:
                 await doc.reference.delete()
         except Exception:
