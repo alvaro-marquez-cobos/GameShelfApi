@@ -18,6 +18,7 @@ redis = {extras = ["hiredis"], version = ">=5.2.0"}
 slowapi = ">=0.1.9"
 psnawp = ">=2.1.0"
 python-multipart = ">=0.0.18"
+apscheduler = "^3.11.2"
 
 [tool.poetry.group.dev.dependencies]
 pytest = ">=8.0"

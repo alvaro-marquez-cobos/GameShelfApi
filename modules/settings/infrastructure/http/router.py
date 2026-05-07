@@ -22,6 +22,8 @@ from modules.settings.domain.interfaces.use_cases.update_notification_prefs impo
 from modules.settings.infrastructure.http.schemas import (
     CountryResponse,
     NotificationPrefsResponse,
+    RegisterPushTokenRequest,
+    RegisterPushTokenResponse,
     UpdateCountryRequest,
     UpdateNotificationPrefsRequest,
 )
@@ -70,3 +72,39 @@ async def update_country(
     repo: Annotated[ISettingsRepository, Depends(get_settings_repository)],
 ) -> None:
     await repo.update_itad_country(current_user.uid, body.country_code)
+
+
+# ---------------------------------------------------------------------------
+# Push notification tokens
+# ---------------------------------------------------------------------------
+
+
+@router.post("/push-tokens", response_model=RegisterPushTokenResponse)
+async def register_push_token(
+    body: RegisterPushTokenRequest,
+    current_user: Annotated[AuthenticatedUser, Depends(get_current_user)],
+    repo: Annotated[ISettingsRepository, Depends(get_settings_repository)],
+) -> RegisterPushTokenResponse:
+    token_id = await repo.register_push_token(
+        uid=current_user.uid,
+        expo_token=body.expo_token,
+        platform=body.platform,
+    )
+    return RegisterPushTokenResponse(token_id=token_id)
+
+
+@router.delete("/push-tokens", status_code=status.HTTP_204_NO_CONTENT)
+async def remove_all_push_tokens(
+    current_user: Annotated[AuthenticatedUser, Depends(get_current_user)],
+    repo: Annotated[ISettingsRepository, Depends(get_settings_repository)],
+) -> None:
+    await repo.remove_all_push_tokens(uid=current_user.uid)
+
+
+@router.delete("/push-tokens/{token_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def remove_push_token(
+    token_id: str,
+    current_user: Annotated[AuthenticatedUser, Depends(get_current_user)],
+    repo: Annotated[ISettingsRepository, Depends(get_settings_repository)],
+) -> None:
+    await repo.remove_push_token(uid=current_user.uid, token_id=token_id)

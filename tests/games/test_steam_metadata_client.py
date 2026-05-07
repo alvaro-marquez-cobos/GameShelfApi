@@ -5,7 +5,10 @@ import pytest
 import respx
 
 from modules.games.domain.entities.steam import SteamAppDetails
-from modules.games.infrastructure.clients.steam_metadata_client import SteamMetadataClient
+from modules.games.infrastructure.clients.steam_metadata_client import (
+    SteamMetadataClient,
+    _normalize,
+)
 
 
 @pytest.fixture
@@ -116,3 +119,47 @@ async def test_search_store_returns_none_on_http_error(client: SteamMetadataClie
         result = await client.search_store("Dota 2")
 
     assert result is None
+
+
+# ---------------------------------------------------------------------------
+# _normalize — special characters and diacritics
+# ---------------------------------------------------------------------------
+
+
+def test_normalize_strips_registered_trademark_symbol() -> None:
+    assert _normalize("The Last of Us Part II®") == "the last of us part ii"
+
+
+def test_normalize_stips_trademark_symbol() -> None:
+    assert _normalize("Metro 2033™") == "metro 2033"
+
+
+def test_normalize_converts_copyright_symbol() -> None:
+    assert _normalize("Castlevania ©1986") == "castlevania 1986"
+
+
+def test_normalize_preserves_roman_numerals() -> None:
+    assert _normalize("Final Fantasy Ⅱ") == "final fantasy ii"
+
+
+def test_normalize_strips_accents_via_decomposition() -> None:
+    assert _normalize("Léon: The Professional") == "leon the professional"
+
+
+def test_normalize_strips_degree_symbol() -> None:
+    assert _normalize("Call of Duty® Modern Warfare™ 2") == "call of duty modern warfare 2"
+
+
+def test_normalize_preserves_spaces_and_numbers() -> None:
+    assert _normalize("Grand Theft Auto V") == "grand theft auto v"
+
+
+def test_normalize_handles_colons_and_parens() -> None:
+    expected = "the witcher 3 wild hunt goty edition"
+    assert _normalize("The Witcher 3: Wild Hunt (GOTY Edition)") == expected
+
+
+def test_normalize_matches_with_special_chars_on_both_sides() -> None:
+    needle = _normalize("The Last of Us Part II®")
+    candidate = _normalize("The Last of Us Part II™")
+    assert needle == candidate

@@ -14,6 +14,7 @@ class SearchResultResponse(BaseModel):
     title: str
     cover_url: str = Field(alias="coverUrl")
     steam_app_id: int | None = Field(default=None, alias="steamAppId")
+    game_type: str | None = Field(default=None, alias="gameType")
     is_owned: bool = Field(alias="isOwned")
     owned_platforms: list[Platform] = Field(default_factory=list, alias="ownedPlatforms")
     is_in_wishlist: bool = Field(alias="isInWishlist")

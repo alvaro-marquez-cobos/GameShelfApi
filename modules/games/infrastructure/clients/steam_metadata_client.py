@@ -7,6 +7,7 @@ storesearch endpoints). Shares the same ``steam_semaphore`` as
 
 import logging
 import re
+import unicodedata
 
 from modules.games.domain.entities.steam import SteamAppDetails
 from shared.domain.interfaces.steam_metadata_client import ISteamMetadataClient
@@ -21,8 +22,24 @@ _STORE_BASE = "https://store.steampowered.com"
 
 
 def _normalize(title: str) -> str:
-    """Lowercase, strip punctuation, and collapse whitespace in a title."""
-    return re.sub(r"\s+", " ", re.sub(r"[^a-z0-9\s]", "", title.lower())).strip()
+    """Lowercase, decompose diacritics, preserve Roman numerals, strip symbols.
+
+    Strips commercial symbols (®, ™, ©) first so they don't become text after
+    NFKC decomposition. Then uses NFKC to convert compatibility characters like
+    Ⅱ → II, followed by NFD + combining-mark removal for accented letters
+    (é → e).
+    """
+    # Remove commercial symbols before any normalization
+    text = title.replace("\u00ae", "").replace("\u2122", "").replace("\u00a9", "")
+
+    # NFKC: converts compatibility chars (Ⅱ → II, ½ → 1/2, etc.)
+    text = unicodedata.normalize("NFKC", text.lower())
+
+    # NFD + strip combining marks for accented letters (é → e)
+    text = unicodedata.normalize("NFD", text)
+    text = "".join(ch for ch in text if unicodedata.category(ch) != "Mn")
+
+    return re.sub(r"\s+", " ", re.sub(r"[^a-z0-9\s]", "", text)).strip()
 
 
 def _word_overlap(a: str, b: str) -> float:

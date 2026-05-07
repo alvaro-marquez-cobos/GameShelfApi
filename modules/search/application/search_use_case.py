@@ -36,6 +36,23 @@ class SearchGamesUseCase(ISearchGamesUseCase):
         if not itad_results:
             return []
 
+        # Filter out non-base-games (DLCs, bundles, etc.) — keep only base games.
+        itad_results = [r for r in itad_results if not r.game_type or r.game_type == "game"]
+
+        if not itad_results:
+            return []
+
+        # Filter out non-base-games: soundtracks, OSTs, special editions (Deluxe, GOTY, etc.).
+        _EXCLUDED_PATTERNS = ("soundtrack", "ost", "deluxe", "goty", "edition")
+        itad_results = [
+            r
+            for r in itad_results
+            if not any(pattern in r.title.lower() for pattern in _EXCLUDED_PATTERNS)
+        ]
+
+        if not itad_results:
+            return []
+
         itad_results = itad_results[:5]
 
         steam_game_ids = {
@@ -68,6 +85,7 @@ class SearchGamesUseCase(ISearchGamesUseCase):
                     title=item.title,
                     cover_url=item.cover_url,
                     steam_app_id=item.steam_app_id,
+                    game_type=item.game_type,
                     is_owned=bool(owned_platforms),
                     owned_platforms=owned_platforms,
                     is_in_wishlist=item.id in wishlist_ids,

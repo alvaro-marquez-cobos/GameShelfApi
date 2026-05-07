@@ -52,9 +52,11 @@ class ItadSearchResult:
         title: Game title.
         cover_url: Cover image URL.
         steam_app_id: Steam app ID if enriched, otherwise None.
+        game_type: ITAD game type (e.g., "game", "dlc"). Only present in /games/search/v1 results.
     """
 
     id: str
     title: str
     cover_url: str
     steam_app_id: int | None
+    game_type: str | None = None

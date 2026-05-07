@@ -255,3 +255,71 @@ async def test_search_games_returns_empty_list_on_error(client: ItadClient) -> N
         results = await client.search_games("anything")
 
     assert results == []
+
+
+# ---------------------------------------------------------------------------
+# _sanitize_query
+# ---------------------------------------------------------------------------
+
+
+def test_sanitize_query_removes_trademark_and_registered_symbols() -> None:
+    result = ItadClient._sanitize_query("Fallout®️: New Vegas™️")
+    assert "®" not in result
+    assert "™" not in result
+    assert "Fallout" in result
+    assert "New Vegas" in result
+
+
+def test_sanitize_query_removes_superscript_characters() -> None:
+    result = ItadClient._sanitize_query("The Elder Scrolls V\u2074")
+    assert "\u2074" not in result
+    assert "V" not in result or "\u2074" not in result
+
+
+def test_sanitize_query_normalizes_whitespace() -> None:
+    result = ItadClient._sanitize_query("Fallout®️ :   New Vegas™️")
+    assert result == "Fallout : New Vegas"
+
+
+def test_sanitize_query_leaves_plain_titles_unchanged() -> None:
+    result = ItadClient._sanitize_query("Hades")
+    assert result == "Hades"
+
+
+def test_sanitize_query_handles_empty_string() -> None:
+    result = ItadClient._sanitize_query("")
+    assert result == ""
+
+
+@pytest.mark.asyncio
+async def test_search_games_sends_sanitized_title(client: ItadClient) -> None:
+    search_payload = [
+        {
+            "id": _GAME_ID,
+            "title": "Fallout: New Vegas",
+            "type": "game",
+            "assets": {"banner300": "https://cdn.itad.com/fnv-300.jpg"},
+        }
+    ]
+    with respx.mock(base_url=_BASE) as mock:
+        search_route = mock.get("/games/search/v1")
+        search_route.mock(return_value=httpx.Response(200, json=search_payload))
+        info_route = mock.get("/games/info/v2")
+        info_route.mock(
+            return_value=httpx.Response(
+                200,
+                json={
+                    "id": _GAME_ID,
+                    "title": "Fallout: New Vegas",
+                    "appid": 22380,
+                    "assets": {"banner300": ""},
+                },
+            )
+        )
+        results = await client.search_games("Fallout®️: New Vegas™️")
+
+    assert len(results) == 1
+    assert search_route.called
+    title_param = search_route.calls[0].request.url.params.get("title", "")
+    assert "®" not in title_param
+    assert "™" not in title_param
