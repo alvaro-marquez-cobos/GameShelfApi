@@ -11,7 +11,9 @@ _BASE = "https://howlongtobeat.com"
 _TOKEN = "test-session-token-abc123"
 _TITLE = "Elden Ring"
 
-_TOKEN_PAYLOAD = {"token": _TOKEN}
+_HP_KEY = "ign_00dedb5f"
+_HP_VAL = "51d8f4cda0a3a99f"
+_TOKEN_PAYLOAD = {"token": _TOKEN, "hpKey": _HP_KEY, "hpVal": _HP_VAL}
 _SEARCH_PAYLOAD = {
     "data": [
         {
@@ -37,10 +39,10 @@ def client() -> HltbClient:
 @pytest.mark.asyncio
 async def test_returns_parsed_hltb_result(client: HltbClient) -> None:
     with respx.mock(base_url=_BASE) as mock:
-        mock.get("/api/finder/init", params=None).mock(
+        mock.get("/api/bleed/init", params=None).mock(
             return_value=httpx.Response(200, json=_TOKEN_PAYLOAD)
         )
-        mock.post("/api/finder").mock(return_value=httpx.Response(200, json=_SEARCH_PAYLOAD))
+        mock.post("/api/bleed").mock(return_value=httpx.Response(200, json=_SEARCH_PAYLOAD))
         result = await client.get_game_duration(_TITLE)
 
     assert isinstance(result, HltbResult)
@@ -55,10 +57,10 @@ async def test_zero_comp_fields_return_none(client: HltbClient) -> None:
         "data": [{"game_name": "Test Game", "comp_main": 36000, "comp_plus": 0, "comp_100": 0}]
     }
     with respx.mock(base_url=_BASE) as mock:
-        mock.get("/api/finder/init", params=None).mock(
+        mock.get("/api/bleed/init", params=None).mock(
             return_value=httpx.Response(200, json=_TOKEN_PAYLOAD)
         )
-        mock.post("/api/finder").mock(return_value=httpx.Response(200, json=payload))
+        mock.post("/api/bleed").mock(return_value=httpx.Response(200, json=payload))
         result = await client.get_game_duration("Test Game")
 
     assert result is not None
@@ -70,10 +72,10 @@ async def test_zero_comp_fields_return_none(client: HltbClient) -> None:
 @pytest.mark.asyncio
 async def test_returns_none_when_no_results(client: HltbClient) -> None:
     with respx.mock(base_url=_BASE) as mock:
-        mock.get("/api/finder/init", params=None).mock(
+        mock.get("/api/bleed/init", params=None).mock(
             return_value=httpx.Response(200, json=_TOKEN_PAYLOAD)
         )
-        mock.post("/api/finder").mock(return_value=httpx.Response(200, json={"data": []}))
+        mock.post("/api/bleed").mock(return_value=httpx.Response(200, json={"data": []}))
         result = await client.get_game_duration("Nonexistent Game XYZ")
 
     assert result is None
@@ -82,7 +84,7 @@ async def test_returns_none_when_no_results(client: HltbClient) -> None:
 @pytest.mark.asyncio
 async def test_returns_none_when_token_fetch_fails(client: HltbClient) -> None:
     with respx.mock(base_url=_BASE) as mock:
-        mock.get("/api/finder/init", params=None).mock(return_value=httpx.Response(503))
+        mock.get("/api/bleed/init", params=None).mock(return_value=httpx.Response(503))
         result = await client.get_game_duration(_TITLE)
 
     assert result is None
@@ -91,7 +93,7 @@ async def test_returns_none_when_token_fetch_fails(client: HltbClient) -> None:
 @pytest.mark.asyncio
 async def test_returns_none_when_token_response_has_no_token(client: HltbClient) -> None:
     with respx.mock(base_url=_BASE) as mock:
-        mock.get("/api/finder/init", params=None).mock(
+        mock.get("/api/bleed/init", params=None).mock(
             return_value=httpx.Response(200, json={"token": None})
         )
         result = await client.get_game_duration(_TITLE)
@@ -103,10 +105,10 @@ async def test_returns_none_when_token_response_has_no_token(client: HltbClient)
 async def test_uses_cached_token_on_second_call(client: HltbClient) -> None:
     """Token should be reused without re-fetching if not expired."""
     with respx.mock(base_url=_BASE) as mock:
-        init_route = mock.get("/api/finder/init", params=None).mock(
+        init_route = mock.get("/api/bleed/init", params=None).mock(
             return_value=httpx.Response(200, json=_TOKEN_PAYLOAD)
         )
-        mock.post("/api/finder").mock(return_value=httpx.Response(200, json=_SEARCH_PAYLOAD))
+        mock.post("/api/bleed").mock(return_value=httpx.Response(200, json=_SEARCH_PAYLOAD))
         await client.get_game_duration(_TITLE)
         await client.get_game_duration("Another Game")
 
@@ -120,13 +122,13 @@ async def test_refreshes_token_on_403(client: HltbClient) -> None:
     new_token_payload = {"token": "refreshed-token-xyz"}
 
     with respx.mock(base_url=_BASE) as mock:
-        init_route = mock.get("/api/finder/init", params=None).mock(
+        init_route = mock.get("/api/bleed/init", params=None).mock(
             side_effect=[
                 httpx.Response(200, json=_TOKEN_PAYLOAD),
                 httpx.Response(200, json=new_token_payload),
             ]
         )
-        search_route = mock.post("/api/finder").mock(
+        search_route = mock.post("/api/bleed").mock(
             side_effect=[
                 httpx.Response(403),
                 httpx.Response(200, json=_SEARCH_PAYLOAD),
