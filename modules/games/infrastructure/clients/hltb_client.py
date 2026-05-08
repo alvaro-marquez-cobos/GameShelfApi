@@ -120,7 +120,7 @@ class HltbClient(IHltbClient):
 
     async def _search(self, game_title: str, creds: _SessionCreds) -> HltbResult | None:
         """POST the search request and parse the first result."""
-        body: dict = {
+        body: dict[str, object] = {
             "searchType": "games",
             "searchTerms": game_title.strip().split(),
             "searchPage": 1,
