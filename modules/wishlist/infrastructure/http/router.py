@@ -38,6 +38,12 @@ def _best_deal_percentage(deals: list[object]) -> int | None:
     return int(best)
 
 
+def _build_portrait_url(steam_app_id: int | None) -> str | None:
+    if steam_app_id is None:
+        return None
+    return f"https://cdn.cloudflare.steamstatic.com/steam/apps/{steam_app_id}/library_600x900.jpg"
+
+
 def _infer_platform(game_id: str, platform_str: str | None, steam_app_id: int | None) -> Platform:
     """Resolve the Platform for a wishlist item without altering the game_id.
 
@@ -82,6 +88,7 @@ async def get_wishlist(
                 title=item.title,
                 platform=item.platform,
                 cover_url=item.cover_url,
+                portrait_cover_url=None,
                 added_at=item.added_at,
                 best_deal_percentage=_best_deal_percentage(deals),
             )
@@ -111,6 +118,7 @@ async def add_to_wishlist(
         title=item.title,
         platform=item.platform,
         cover_url=item.cover_url,
+        portrait_cover_url=_build_portrait_url(body.steam_app_id),
         added_at=item.added_at,
         best_deal_percentage=None,
     )

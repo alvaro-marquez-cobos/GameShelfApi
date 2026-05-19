@@ -15,6 +15,7 @@ class PopularGameResponse(BaseModel):
     title: str
     current_players: int = Field(alias="currentPlayers")
     cover_url: str | None = Field(default=None, alias="coverUrl")
+    portrait_cover_url: str | None = Field(default=None, alias="portraitCoverUrl")
 
 
 class HomeResponse(BaseModel):

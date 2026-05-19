@@ -29,6 +29,7 @@ class LibraryGame:
     title: str
     platform: Platform
     cover_url: str | None = None
+    portrait_cover_url: str | None = None
     playtime_minutes: int = 0
     last_played: str | None = None
     steam_app_id: int | None = None

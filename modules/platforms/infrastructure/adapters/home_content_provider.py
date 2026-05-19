@@ -31,12 +31,18 @@ def _steam_game_to_library_game(game: SteamGame) -> LibraryGame:
 
 def _charts_game_to_popular(game: SteamChartsGame) -> PopularGame:
     cover_url = _STEAM_HEADER_URL.format(app_id=game.app_id) if game.app_id else None
+    portrait_cover_url = (
+        f"https://cdn.cloudflare.steamstatic.com/steam/apps/{game.app_id}/library_600x900.jpg"
+        if game.app_id
+        else None
+    )
     return PopularGame(
         game_id=f"steam_{game.app_id}",
         steam_app_id=game.app_id,
         title=game.name,
         current_players=game.current_players,
         cover_url=cover_url,
+        portrait_cover_url=portrait_cover_url,
     )
 
 
