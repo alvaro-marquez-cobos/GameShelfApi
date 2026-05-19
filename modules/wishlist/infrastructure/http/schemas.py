@@ -15,6 +15,7 @@ class WishlistItemResponse(BaseModel):
     title: str
     platform: Platform
     cover_url: str | None = Field(default=None, alias="coverUrl")
+    portrait_cover_url: str | None = Field(default=None, alias="portraitCoverUrl")
     added_at: str = Field(alias="addedAt")
     best_deal_percentage: int | None = Field(default=None, alias="bestDealPercentage")
 

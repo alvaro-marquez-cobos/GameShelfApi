@@ -29,12 +29,19 @@ from shared.domain.enums.platform import Platform
 router = APIRouter()
 
 
+def _build_portrait_url(steam_app_id: int | None) -> str | None:
+    if steam_app_id is None:
+        return None
+    return f"https://cdn.cloudflare.steamstatic.com/steam/apps/{steam_app_id}/library_600x900.jpg"
+
+
 def _to_game_response(game: LibraryGame) -> LibraryGameResponse:
     return LibraryGameResponse(
         id=game.game_id,
         title=game.title,
         platform=game.platform,
         cover_url=game.cover_url,
+        portrait_cover_url=_build_portrait_url(game.steam_app_id),
         playtime_minutes=game.playtime_minutes,
         last_played=game.last_played,
         steam_app_id=game.steam_app_id,

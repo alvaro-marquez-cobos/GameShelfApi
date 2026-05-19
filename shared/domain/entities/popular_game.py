@@ -20,3 +20,4 @@ class PopularGame:
     title: str
     current_players: int
     cover_url: str | None = None
+    portrait_cover_url: str | None = None
